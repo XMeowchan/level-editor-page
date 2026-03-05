@@ -30,31 +30,62 @@
             letter-spacing: -0.5px;
             color: #558b2f;
         }
-        .toolbar {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+        .main-layout {
             display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .canvas-area {
+            flex: 1;
+            min-width: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
             box-shadow: 0 4px 0 rgba(139, 111, 71, 0.3), 0 8px 32px rgba(0,0,0,0.15);
             border: 3px solid #8b6f47;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        .sidebar h3 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #558b2f;
+            border-bottom: 2px solid #aed581;
+            padding-bottom: 8px;
         }
         .tool-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        .tool-group.actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .tool-btn, .action-btn {
             display: flex;
-            gap: 8px;
-            padding: 8px;
-            background: rgba(139, 195, 74, 0.1);
-            border-radius: 8px;
-            border: 2px solid #aed581;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .tool-btn .icon, .action-btn .icon {
+            font-size: 24px;
+        }
+        .tool-btn .label, .action-btn .label {
+            font-size: 10px;
+            line-height: 1;
+            opacity: 0.9;
         }
         button {
-            padding: 10px 18px;
+            padding: 8px 4px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
             font-weight: 600;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 3px 0 rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
@@ -68,6 +99,35 @@
         button:active { 
             top: 2px;
             box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 1px 4px rgba(0,0,0,0.1);
+        }
+        /* Tooltip */
+        button[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 50%;
+            right: 100%;
+            transform: translateY(50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            margin-right: 8px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        button[title]:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 50%;
+            right: 100%;
+            transform: translateY(50%);
+            border: 5px solid transparent;
+            border-left-color: rgba(0, 0, 0, 0.9);
+            margin-right: 3px;
+            z-index: 1000;
+            pointer-events: none;
         }
         .tool { 
             background: linear-gradient(180deg, #8bc34a 0%, #689f38 100%);
@@ -181,6 +241,21 @@
             overflow-y: auto;
         }
         #configPanel.show { display: block; }
+        #examplesPanel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            display: none;
+            z-index: 1000;
+            color: #333;
+            min-width: 300px;
+        }
+        #examplesPanel.show { display: block; }
         .config-item {
             margin-bottom: 15px;
         }
@@ -217,51 +292,121 @@
             font-weight: bold;
             font-size: 12px;
         }
+        .selection-box {
+            position: absolute;
+            border: 2px dashed #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            pointer-events: none;
+        }
+        .selected-object {
+            outline: 3px solid #667eea;
+            outline-offset: -3px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎮 关卡编辑器 - 终极完整版</h1>
-        <div class="toolbar">
-            <div class="tool-group">
-                <button class="tool active" data-tool="platform">🟫 平台</button>
-                <button class="tool" data-tool="moving">🔄 移动平台</button>
-                <button class="tool" data-tool="bounce">🔵 弹跳板</button>
-                <button class="tool" data-tool="enemy">👾 敌人</button>
-                <button class="tool" data-tool="spike">🔺 尖刺</button>
-                <button class="tool" data-tool="coin">💰 金币</button>
-                <button class="tool" data-tool="spawn">🟢 出生</button>
-                <button class="tool" data-tool="goal">⭐ 终点</button>
-                <button class="tool" data-tool="erase">🧹 擦除</button>
-            </div>
-            <span class="spacer"></span>
-            <button class="action" id="gridBtn">📏 32px</button>
-            <button class="action" id="undoBtn">↶ 撤销</button>
-            <button class="action" id="redoBtn">↷ 重做</button>
-            <button class="action" id="testBtn">▶️ 测试</button>
-            <button class="action" id="editBtn" style="display:none">✏️ 编辑</button>
-            <button class="action" id="clearBtn">🗑️ 清空</button>
-            <button class="action" id="saveBtn">💾 保存</button>
-            <button class="action" id="loadBtn">📂 加载</button>
-            <button class="action" id="configBtn">⚙️ 配置</button>
-        </div>
-        <div class="canvas-wrapper">
-            <div class="props-panel">
-                <div>
-                    <label>关卡名:</label>
-                    <input type="text" id="levelName" placeholder="我的关卡" value="我的关卡">
+        <div class="main-layout">
+            <!-- 左侧画布区 -->
+            <div class="canvas-area">
+                <div class="canvas-wrapper">
+                    <div class="props-panel">
+                        <div>
+                            <label>关卡名:</label>
+                            <input type="text" id="levelName" placeholder="我的关卡" value="我的关卡">
+                        </div>
+                        <div>
+                            <label>作者:</label>
+                            <input type="text" id="levelAuthor" placeholder="XMeow" value="XMeow">
+                        </div>
+                        <button class="action" id="helpBtn" style="margin-left: auto;">❓</button>
+                    </div>
+                    <canvas id="canvas" width="1600" height="900"></canvas>
+                    <div class="info">
+                        <span id="mode">✏️ 编辑模式</span>
+                        <span id="timer" class="timer"></span>
+                        <span id="pos"></span>
+                    </div>
                 </div>
-                <div>
-                    <label>作者:</label>
-                    <input type="text" id="levelAuthor" placeholder="XMeow" value="XMeow">
-                </div>
-                <button class="action" id="helpBtn" style="margin-left: auto;">❓ 帮助 (H)</button>
             </div>
-            <canvas id="canvas" width="1600" height="900"></canvas>
-            <div class="info">
-                <span id="mode">✏️ 编辑模式</span>
-                <span id="timer" class="timer"></span>
-                <span id="pos"></span>
+            
+            <!-- 右侧工具栏 -->
+            <div class="sidebar">
+                <h3>🎨 工具</h3>
+                <div class="tool-group">
+                    <button class="tool tool-btn" data-tool="select">
+                        <span class="icon">👆</span><span class="label">选择</span>
+                    </button>
+                    <button class="tool tool-btn active" data-tool="platform">
+                        <span class="icon">🟫</span><span class="label">平台</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="oneway">
+                        <span class="icon">⬆️</span><span class="label">单向</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="moving">
+                        <span class="icon">🔄</span><span class="label">移动</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="bounce">
+                        <span class="icon">🔵</span><span class="label">弹跳</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="enemy">
+                        <span class="icon">👾</span><span class="label">敌人</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="spike">
+                        <span class="icon">🔺</span><span class="label">尖刺</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="coin">
+                        <span class="icon">💰</span><span class="label">金币</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="spawn">
+                        <span class="icon">🟢</span><span class="label">出生</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="goal">
+                        <span class="icon">⭐</span><span class="label">终点</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="erase">
+                        <span class="icon">🧹</span><span class="label">擦除</span>
+                    </button>
+                </div>
+                
+                <h3>⚡ 操作</h3>
+                <div class="tool-group actions">
+                    <button class="action action-btn" id="undoBtn">
+                        <span class="icon">↶</span><span class="label">撤销</span>
+                    </button>
+                    <button class="action action-btn" id="redoBtn">
+                        <span class="icon">↷</span><span class="label">重做</span>
+                    </button>
+                    <button class="action action-btn" id="gridBtn">
+                        <span class="icon">📏</span><span class="label">网格</span>
+                    </button>
+                    <button class="action action-btn" id="testBtn">
+                        <span class="icon">▶️</span><span class="label">测试</span>
+                    </button>
+                    <button class="action action-btn" id="editBtn" style="display:none">
+                        <span class="icon">✏️</span><span class="label">编辑</span>
+                    </button>
+                    <button class="action action-btn" id="clearBtn">
+                        <span class="icon">🗑️</span><span class="label">清空</span>
+                    </button>
+                </div>
+                
+                <h3>💾 文件</h3>
+                <div class="tool-group actions">
+                    <button class="action action-btn" id="saveBtn">
+                        <span class="icon">💾</span><span class="label">保存</span>
+                    </button>
+                    <button class="action action-btn" id="loadBtn">
+                        <span class="icon">📂</span><span class="label">加载</span>
+                    </button>
+                    <button class="action action-btn" id="examplesBtn">
+                        <span class="icon">📚</span><span class="label">示例</span>
+                    </button>
+                    <button class="action action-btn" id="configBtn">
+                        <span class="icon">⚙️</span><span class="label">配置</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -270,12 +415,21 @@
         <h3 style="margin-bottom: 15px; color: #667eea;">⌨️ 快捷键</h3>
         <div class="shortcut"><span>撤销</span><span class="key">Ctrl+Z</span></div>
         <div class="shortcut"><span>重做</span><span class="key">Ctrl+Y</span></div>
-        <div class="shortcut"><span>复制关卡</span><span class="key">Ctrl+C</span></div>
-        <div class="shortcut"><span>粘贴关卡</span><span class="key">Ctrl+V</span></div>
+        <div class="shortcut"><span>复制（选中/全部）</span><span class="key">Ctrl+C</span></div>
+        <div class="shortcut"><span>粘贴</span><span class="key">Ctrl+V</span></div>
+        <div class="shortcut"><span>删除选中</span><span class="key">Delete</span></div>
+        <div class="shortcut"><span>取消选择</span><span class="key">Esc</span></div>
+        <div class="shortcut"><span>多选</span><span class="key">Shift+点击</span></div>
+        <div class="shortcut"><span>右键编辑属性</span><span class="key">右键</span></div>
         <div class="shortcut"><span>切换网格</span><span class="key">G</span></div>
         <div class="shortcut"><span>测试/编辑</span><span class="key">T</span></div>
         <div class="shortcut"><span>保存</span><span class="key">Ctrl+S</span></div>
         <div class="shortcut"><span>帮助</span><span class="key">H</span></div>
+        <h3 style="margin: 15px 0 10px 0; color: #667eea;">🎮 游戏操作</h3>
+        <div class="shortcut"><span>移动</span><span class="key">WASD / 方向键</span></div>
+        <div class="shortcut"><span>跳跃</span><span class="key">空格 / W / ↑</span></div>
+        <div class="shortcut"><span>墙跳</span><span class="key">贴墙时跳跃</span></div>
+        <div class="shortcut"><span>冲刺</span><span class="key">Shift</span></div>
         <div style="margin-top: 15px; text-align: center;">
             <button class="action" onclick="document.getElementById('helpPanel').classList.remove('show')">关闭</button>
         </div>
@@ -325,16 +479,240 @@
         </div>
     </div>
 
+    <div id="examplesPanel">
+        <h3 style="margin-bottom: 15px; color: #558b2f;">📚 马里奥风格关卡</h3>
+        <div style="display: grid; gap: 10px;">
+            <button class="action" onclick="loadExample('world_1_1')">🍄 World 1-1</button>
+            <button class="action" onclick="loadExample('world_1_2')">🏰 World 1-2 地下</button>
+            <button class="action" onclick="loadExample('world_1_3')">🌳 World 1-3 树顶</button>
+            <button class="action" onclick="loadExample('world_1_4')">🔥 World 1-4 城堡</button>
+            <button class="action" onclick="loadExample('bonus_stage')">⭐ 奖励关卡</button>
+        </div>
+        <div style="margin-top: 15px; text-align: center;">
+            <button class="action" onclick="document.getElementById('examplesPanel').classList.remove('show')">关闭</button>
+        </div>
+    </div>
+
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         let GRID = 32;
         const W = 1600, H = 900;
         
-        let mode = 'edit', tool = 'platform', objects = [], player = null;
+        let mode = 'edit', tool = 'select', objects = [], player = null;
         let drawing = false, lastX = -1, lastY = -1;
         let startTime = 0, elapsedTime = 0, time = 0;
         const keys = {};
+        
+        // 主题系统
+        let currentTheme = 'sky';
+        const themes = {
+            sky: {
+                bg: ['#87ceeb', '#b0d4f1', '#e0f0ff'],
+                decorations: [
+                    { type: 'cloud', x: 200, y: 100, size: 60 },
+                    { type: 'cloud', x: 500, y: 150, size: 80 },
+                    { type: 'cloud', x: 900, y: 80, size: 70 },
+                    { type: 'cloud', x: 1300, y: 120, size: 90 },
+                    { type: 'sun', x: 1400, y: 100, size: 80 }
+                ]
+            },
+            forest: {
+                bg: ['#4a7c59', '#6b9b7f', '#8fb99f'],
+                decorations: [
+                    { type: 'tree', x: 150, y: 700, size: 120 },
+                    { type: 'tree', x: 400, y: 720, size: 100 },
+                    { type: 'tree', x: 800, y: 710, size: 130 },
+                    { type: 'tree', x: 1200, y: 700, size: 110 },
+                    { type: 'bush', x: 300, y: 780, size: 40 },
+                    { type: 'bush', x: 600, y: 790, size: 35 },
+                    { type: 'bush', x: 1000, y: 785, size: 45 }
+                ]
+            },
+            cave: {
+                bg: ['#2c2c3e', '#3d3d5c', '#4e4e6e'],
+                decorations: [
+                    { type: 'stalactite', x: 200, y: 0, size: 60 },
+                    { type: 'stalactite', x: 500, y: 0, size: 80 },
+                    { type: 'stalactite', x: 900, y: 0, size: 70 },
+                    { type: 'stalactite', x: 1300, y: 0, size: 90 },
+                    { type: 'crystal', x: 300, y: 400, size: 30 },
+                    { type: 'crystal', x: 800, y: 500, size: 35 },
+                    { type: 'crystal', x: 1200, y: 450, size: 40 }
+                ]
+            }
+        };
+        
+        // ===== 选择系统 =====
+        let selectedObjects = [];
+        let selectionBox = null;
+        let selectionStart = null;
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        
+        // ===== 示例关卡库 =====
+        const EXAMPLE_LEVELS = {
+            world_1_1: {
+                name: "🍄 World 1-1",
+                author: "BOT",
+                objects: [
+                    {type: 'spawn', x: 64, y: 800},
+                    // 开场平地
+                    {type: 'platform', x: 0, y: 832}, {type: 'platform', x: 32, y: 832}, {type: 'platform', x: 64, y: 832},
+                    {type: 'platform', x: 96, y: 832}, {type: 'platform', x: 128, y: 832}, {type: 'platform', x: 160, y: 832},
+                    {type: 'platform', x: 192, y: 832}, {type: 'platform', x: 224, y: 832},
+                    // 第一个问号砖块（金币）
+                    {type: 'coin', x: 192, y: 704},
+                    // 第一个敌人
+                    {type: 'enemy', x: 288, y: 800, startX: 288, range: 64, speed: 1, offset: 0, dir: 1},
+                    {type: 'platform', x: 256, y: 832}, {type: 'platform', x: 288, y: 832}, {type: 'platform', x: 320, y: 832},
+                    {type: 'platform', x: 352, y: 832},
+                    // 台阶
+                    {type: 'platform', x: 448, y: 800},
+                    {type: 'platform', x: 480, y: 768}, {type: 'platform', x: 512, y: 768},
+                    {type: 'platform', x: 544, y: 736}, {type: 'platform', x: 576, y: 736}, {type: 'platform', x: 608, y: 736},
+                    {type: 'coin', x: 576, y: 704},
+                    // 下台阶
+                    {type: 'platform', x: 640, y: 768}, {type: 'platform', x: 672, y: 768},
+                    {type: 'platform', x: 704, y: 800},
+                    {type: 'platform', x: 736, y: 832}, {type: 'platform', x: 768, y: 832}, {type: 'platform', x: 800, y: 832},
+                    // 管道（用弹跳板代替）
+                    {type: 'bounce', x: 896, y: 832},
+                    {type: 'platform', x: 896, y: 832},
+                    // 空中金币
+                    {type: 'coin', x: 896, y: 640}, {type: 'coin', x: 928, y: 608}, {type: 'coin', x: 960, y: 640},
+                    // 继续平台
+                    {type: 'platform', x: 1024, y: 832}, {type: 'platform', x: 1056, y: 832}, {type: 'platform', x: 1088, y: 832},
+                    // 终点旗杆
+                    {type: 'platform', x: 1184, y: 832}, {type: 'platform', x: 1216, y: 832},
+                    {type: 'goal', x: 1216, y: 800}
+                ]
+            },
+            world_1_2: {
+                name: "🏰 World 1-2 地下",
+                author: "BOT",
+                objects: [
+                    {type: 'spawn', x: 64, y: 800},
+                    // 地下起点
+                    {type: 'platform', x: 32, y: 832}, {type: 'platform', x: 64, y: 832}, {type: 'platform', x: 96, y: 832},
+                    {type: 'platform', x: 128, y: 832}, {type: 'platform', x: 160, y: 832},
+                    // 第一个坑
+                    {type: 'platform', x: 256, y: 832}, {type: 'platform', x: 288, y: 832},
+                    // 砖块平台
+                    {type: 'platform', x: 224, y: 704}, {type: 'platform', x: 256, y: 704}, {type: 'platform', x: 288, y: 704},
+                    {type: 'coin', x: 256, y: 672},
+                    // 继续前进
+                    {type: 'platform', x: 384, y: 832}, {type: 'platform', x: 416, y: 832}, {type: 'platform', x: 448, y: 832},
+                    // 敌人区
+                    {type: 'enemy', x: 416, y: 800, startX: 416, range: 64, speed: 1.2, offset: 0, dir: 1},
+                    // 第二个坑 + 空中平台
+                    {type: 'platform', x: 544, y: 704}, {type: 'platform', x: 576, y: 704},
+                    {type: 'coin', x: 560, y: 672},
+                    {type: 'platform', x: 672, y: 832}, {type: 'platform', x: 704, y: 832},
+                    // 管道区（弹跳板）
+                    {type: 'bounce', x: 800, y: 832},
+                    {type: 'platform', x: 800, y: 832},
+                    {type: 'coin', x: 800, y: 640}, {type: 'coin', x: 832, y: 640}, {type: 'coin', x: 864, y: 640},
+                    // 终点
+                    {type: 'platform', x: 960, y: 832}, {type: 'platform', x: 992, y: 832},
+                    {type: 'goal', x: 992, y: 800}
+                ]
+            },
+            world_1_3: {
+                name: "🌳 World 1-3 树顶",
+                author: "BOT",
+                objects: [
+                    {type: 'spawn', x: 64, y: 800},
+                    {type: 'platform', x: 32, y: 832}, {type: 'platform', x: 64, y: 832}, {type: 'platform', x: 96, y: 832},
+                    // 跳跃挑战开始
+                    {type: 'platform', x: 192, y: 768}, {type: 'platform', x: 224, y: 768},
+                    {type: 'coin', x: 208, y: 736},
+                    {type: 'platform', x: 320, y: 704}, {type: 'platform', x: 352, y: 704},
+                    {type: 'coin', x: 336, y: 672},
+                    {type: 'platform', x: 448, y: 640}, {type: 'platform', x: 480, y: 640}, {type: 'platform', x: 512, y: 640},
+                    {type: 'coin', x: 480, y: 608},
+                    // 移动平台区
+                    {type: 'moving', x: 608, y: 640, startX: 608, range: 96, speed: 2, offset: 0},
+                    {type: 'coin', x: 640, y: 608},
+                    {type: 'platform', x: 768, y: 640}, {type: 'platform', x: 800, y: 640},
+                    // 下降
+                    {type: 'platform', x: 896, y: 704}, {type: 'platform', x: 928, y: 704},
+                    {type: 'platform', x: 1024, y: 768}, {type: 'platform', x: 1056, y: 768},
+                    {type: 'platform', x: 1152, y: 832}, {type: 'platform', x: 1184, y: 832},
+                    {type: 'goal', x: 1184, y: 800}
+                ]
+            },
+            world_1_4: {
+                name: "🔥 World 1-4 城堡",
+                author: "BOT",
+                objects: [
+                    {type: 'spawn', x: 64, y: 800},
+                    {type: 'platform', x: 32, y: 832}, {type: 'platform', x: 64, y: 832}, {type: 'platform', x: 96, y: 832},
+                    // 熔岩跳跃（用尖刺代替）
+                    {type: 'spike', x: 160, y: 832}, {type: 'spike', x: 192, y: 832},
+                    {type: 'platform', x: 256, y: 832}, {type: 'platform', x: 288, y: 832},
+                    // 移动平台 + 火焰柱
+                    {type: 'moving', x: 384, y: 768, startX: 384, range: 128, speed: 2, offset: 0},
+                    {type: 'spike', x: 416, y: 832}, {type: 'spike', x: 448, y: 832}, {type: 'spike', x: 480, y: 832},
+                    {type: 'platform', x: 576, y: 832}, {type: 'platform', x: 608, y: 832},
+                    // 敌人 + 尖刺组合
+                    {type: 'enemy', x: 704, y: 800, startX: 704, range: 96, speed: 1.5, offset: 0, dir: 1},
+                    {type: 'platform', x: 672, y: 832}, {type: 'platform', x: 704, y: 832}, {type: 'platform', x: 736, y: 832},
+                    {type: 'platform', x: 768, y: 832}, {type: 'platform', x: 800, y: 832},
+                    {type: 'spike', x: 736, y: 832},
+                    // 最后的跳跃
+                    {type: 'platform', x: 896, y: 768}, {type: 'platform', x: 928, y: 768},
+                    {type: 'spike', x: 864, y: 832}, {type: 'spike', x: 960, y: 832},
+                    // Boss 平台（用弹跳板到达）
+                    {type: 'bounce', x: 1024, y: 768},
+                    {type: 'platform', x: 1024, y: 768},
+                    {type: 'platform', x: 1120, y: 640}, {type: 'platform', x: 1152, y: 640}, {type: 'platform', x: 1184, y: 640},
+                    // 终点（公主！）
+                    {type: 'goal', x: 1184, y: 608}
+                ]
+            },
+            bonus_stage: {
+                name: "⭐ 奖励关卡",
+                author: "BOT",
+                objects: [
+                    {type: 'spawn', x: 64, y: 800},
+                    {type: 'platform', x: 32, y: 832}, {type: 'platform', x: 64, y: 832}, {type: 'platform', x: 96, y: 832},
+                    // 金币天堂！
+                    {type: 'platform', x: 192, y: 768},
+                    {type: 'coin', x: 160, y: 800}, {type: 'coin', x: 192, y: 800}, {type: 'coin', x: 224, y: 800},
+                    {type: 'coin', x: 192, y: 736}, {type: 'coin', x: 224, y: 736}, {type: 'coin', x: 256, y: 736},
+                    // 弹跳板区
+                    {type: 'bounce', x: 320, y: 832},
+                    {type: 'platform', x: 320, y: 832},
+                    {type: 'coin', x: 320, y: 640}, {type: 'coin', x: 352, y: 608}, {type: 'coin', x: 384, y: 576},
+                    {type: 'coin', x: 416, y: 608}, {type: 'coin', x: 448, y: 640},
+                    {type: 'platform', x: 512, y: 832}, {type: 'platform', x: 544, y: 832},
+                    // 更多金币
+                    {type: 'platform', x: 640, y: 704},
+                    {type: 'coin', x: 608, y: 768}, {type: 'coin', x: 640, y: 768}, {type: 'coin', x: 672, y: 768},
+                    {type: 'coin', x: 640, y: 672}, {type: 'coin', x: 672, y: 672}, {type: 'coin', x: 704, y: 672},
+                    // 移动平台 + 金币
+                    {type: 'moving', x: 768, y: 640, startX: 768, range: 128, speed: 2, offset: 0},
+                    {type: 'coin', x: 800, y: 608}, {type: 'coin', x: 832, y: 608}, {type: 'coin', x: 864, y: 608},
+                    // 终点
+                    {type: 'platform', x: 960, y: 832}, {type: 'platform', x: 992, y: 832},
+                    {type: 'goal', x: 992, y: 800}
+                ]
+            }
+        };
+        
+        function loadExample(name) {
+            const level = EXAMPLE_LEVELS[name];
+            if (level) {
+                objects = JSON.parse(JSON.stringify(level.objects));
+                document.getElementById('levelName').value = level.name;
+                document.getElementById('levelAuthor').value = level.author;
+                selectedObjects = [];
+                saveHistory();
+                render();
+                document.getElementById('examplesPanel').classList.remove('show');
+            }
+        }
         
         // ===== Celeste 风格物理参数 =====
         const PHYSICS = {
@@ -467,6 +845,28 @@
                     obj.range = parseInt(newRange) * GRID;
                     render();
                 }
+            } else if (obj.type === 'switch') {
+                const newId = prompt('开关 ID（用于关联门）：', obj.switchId || '');
+                if (newId !== null) {
+                    obj.switchId = newId.trim();
+                    render();
+                }
+            } else if (obj.type === 'door') {
+                const newIds = prompt('关联的开关 ID（多个用逗号分隔）：', obj.switchIds ? obj.switchIds.join(',') : '');
+                if (newIds !== null) {
+                    obj.switchIds = newIds.split(',').map(id => id.trim()).filter(id => id);
+                    render();
+                }
+            } else if (obj.type === 'portal') {
+                const newId = prompt('传送门 ID（A 或 B）：', obj.portalId || 'A');
+                if (newId !== null) {
+                    obj.portalId = newId.trim().toUpperCase();
+                    const pairId = prompt('配对传送门 ID：', obj.pairId || '');
+                    if (pairId !== null) {
+                        obj.pairId = pairId.trim().toUpperCase();
+                    }
+                    render();
+                }
             }
         }
         
@@ -513,9 +913,24 @@
             render();
         };
         
+        // 主题切换（暂时禁用，等 subagent 完成）
+        // document.getElementById('themeBtn').onclick = () => {
+        //     const themeNames = ['sky', 'forest', 'cave'];
+        //     const idx = themeNames.indexOf(currentTheme);
+        //     currentTheme = themeNames[(idx + 1) % themeNames.length];
+        //     const themeLabels = { sky: '天空', forest: '森林', cave: '洞穴' };
+        //     document.getElementById('themeBtn').textContent = `🎨 ${themeLabels[currentTheme]}`;
+        //     render();
+        // };
+        
         // 撤销/重做按钮
         document.getElementById('undoBtn').onclick = undo;
         document.getElementById('redoBtn').onclick = redo;
+        
+        // 示例关卡按钮
+        document.getElementById('examplesBtn').onclick = () => {
+            document.getElementById('examplesPanel').classList.toggle('show');
+        };
         
         // 帮助面板
         document.getElementById('helpBtn').onclick = () => {
@@ -569,27 +984,119 @@
             if (e.button === 2) { // 右键
                 e.preventDefault();
                 editProperties(e);
+            } else if (tool === 'select') {
+                // 选择工具逻辑
+                const r = canvas.getBoundingClientRect();
+                const mx = (e.clientX - r.left) / r.width * W;
+                const my = (e.clientY - r.top) / r.height * H;
+                
+                // 检查是否点击了已选中的物体
+                const clickedSelected = selectedObjects.find(o => 
+                    mx >= o.x && mx < o.x + GRID && my >= o.y && my < o.y + GRID
+                );
+                
+                if (clickedSelected && !e.shiftKey) {
+                    // 开始拖动 - 记录初始鼠标位置
+                    isDragging = true;
+                    dragOffset.x = mx;
+                    dragOffset.y = my;
+                    // 记录所有选中物体的初始位置
+                    selectedObjects.forEach(o => {
+                        o._dragStartX = o.x;
+                        o._dragStartY = o.y;
+                    });
+                } else {
+                    // 开始框选
+                    selectionStart = { x: mx, y: my };
+                    if (!e.shiftKey) selectedObjects = [];
+                }
             } else {
                 drawing = true; 
                 draw(e); 
             }
         };
+        
         canvas.oncontextmenu = e => e.preventDefault();
+        
         canvas.onmousemove = e => {
             const r = canvas.getBoundingClientRect();
             const gx = Math.floor((e.clientX - r.left) / r.width * W / GRID);
             const gy = Math.floor((e.clientY - r.top) / r.height * H / GRID);
             document.getElementById('pos').textContent = `${gx}, ${gy}`;
-            if (drawing && mode === 'edit') draw(e);
+            
+            if (mode !== 'edit') return;
+            
+            const mx = (e.clientX - r.left) / r.width * W;
+            const my = (e.clientY - r.top) / r.height * H;
+            
+            if (tool === 'select') {
+                if (isDragging && selectedObjects.length > 0) {
+                    // 拖动选中的物体 - 计算鼠标移动距离
+                    const deltaX = mx - dragOffset.x;
+                    const deltaY = my - dragOffset.y;
+                    
+                    // 对每个物体应用偏移（基于初始位置）
+                    selectedObjects.forEach(o => {
+                        const newX = Math.floor((o._dragStartX + deltaX) / GRID) * GRID;
+                        const newY = Math.floor((o._dragStartY + deltaY) / GRID) * GRID;
+                        
+                        if (o.x !== newX || o.y !== newY) {
+                            const dx = newX - o.x;
+                            const dy = newY - o.y;
+                            o.x = newX;
+                            o.y = newY;
+                            if (o.startX !== undefined) o.startX += dx;
+                        }
+                    });
+                    render();
+                } else if (selectionStart) {
+                    // 更新选择框
+                    selectionBox = {
+                        x: Math.min(selectionStart.x, mx),
+                        y: Math.min(selectionStart.y, my),
+                        w: Math.abs(mx - selectionStart.x),
+                        h: Math.abs(my - selectionStart.y)
+                    };
+                    render();
+                }
+            } else if (drawing) {
+                draw(e);
+            }
         };
+        
         canvas.onmouseup = canvas.onmouseleave = () => { 
-            if (drawing) saveHistory();
-            drawing = false; 
-            lastX = lastY = -1; 
+            if (tool === 'select') {
+                if (selectionBox) {
+                    // 完成框选
+                    objects.forEach(o => {
+                        if (o.x + GRID > selectionBox.x && o.x < selectionBox.x + selectionBox.w &&
+                            o.y + GRID > selectionBox.y && o.y < selectionBox.y + selectionBox.h) {
+                            if (!selectedObjects.includes(o)) {
+                                selectedObjects.push(o);
+                            }
+                        }
+                    });
+                    selectionBox = null;
+                    selectionStart = null;
+                    render();
+                } else if (isDragging) {
+                    // 清理拖动临时数据
+                    selectedObjects.forEach(o => {
+                        delete o._dragStartX;
+                        delete o._dragStartY;
+                    });
+                    saveHistory();
+                    isDragging = false;
+                }
+            } else {
+                if (drawing) saveHistory();
+                drawing = false;
+            }
+            lastX = lastY = -1;
         };
         
         function draw(e) {
-            if (mode !== 'edit') return;
+            if (mode !== 'edit' || tool === 'select') return;
             const r = canvas.getBoundingClientRect();
             const x = Math.floor((e.clientX - r.left) / r.width * W / GRID) * GRID;
             const y = Math.floor((e.clientY - r.top) / r.height * H / GRID) * GRID;
@@ -624,13 +1131,91 @@
         
         // 渲染
         function render() {
-            // 背景渐变
+            // 背景渐变（根据主题）
+            const theme = themes[currentTheme];
             const gradient = ctx.createLinearGradient(0, 0, 0, H);
-            gradient.addColorStop(0, '#87ceeb');
-            gradient.addColorStop(0.7, '#b0d4f1');
-            gradient.addColorStop(1, '#e0f0ff');
+            gradient.addColorStop(0, theme.bg[0]);
+            gradient.addColorStop(0.7, theme.bg[1]);
+            gradient.addColorStop(1, theme.bg[2]);
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, W, H);
+            
+            // 绘制装饰
+            theme.decorations.forEach(deco => {
+                switch(deco.type) {
+                    case 'cloud':
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                        ctx.beginPath();
+                        ctx.arc(deco.x, deco.y, deco.size * 0.5, 0, Math.PI * 2);
+                        ctx.arc(deco.x + deco.size * 0.4, deco.y - deco.size * 0.2, deco.size * 0.4, 0, Math.PI * 2);
+                        ctx.arc(deco.x + deco.size * 0.7, deco.y, deco.size * 0.45, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'sun':
+                        ctx.fillStyle = '#ffd700';
+                        ctx.beginPath();
+                        ctx.arc(deco.x, deco.y, deco.size * 0.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffed4e';
+                        ctx.lineWidth = 3;
+                        for (let i = 0; i < 12; i++) {
+                            const angle = (Math.PI * 2 / 12) * i;
+                            ctx.beginPath();
+                            ctx.moveTo(deco.x + Math.cos(angle) * deco.size * 0.6, deco.y + Math.sin(angle) * deco.size * 0.6);
+                            ctx.lineTo(deco.x + Math.cos(angle) * deco.size * 0.8, deco.y + Math.sin(angle) * deco.size * 0.8);
+                            ctx.stroke();
+                        }
+                        break;
+                    case 'tree':
+                        // 树干
+                        ctx.fillStyle = '#8b6f47';
+                        ctx.fillRect(deco.x - deco.size * 0.1, deco.y, deco.size * 0.2, deco.size * 0.4);
+                        // 树冠
+                        ctx.fillStyle = '#2e7d32';
+                        ctx.beginPath();
+                        ctx.moveTo(deco.x, deco.y - deco.size * 0.3);
+                        ctx.lineTo(deco.x - deco.size * 0.3, deco.y + deco.size * 0.1);
+                        ctx.lineTo(deco.x + deco.size * 0.3, deco.y + deco.size * 0.1);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.moveTo(deco.x, deco.y - deco.size * 0.5);
+                        ctx.lineTo(deco.x - deco.size * 0.25, deco.y - deco.size * 0.1);
+                        ctx.lineTo(deco.x + deco.size * 0.25, deco.y - deco.size * 0.1);
+                        ctx.fill();
+                        break;
+                    case 'bush':
+                        ctx.fillStyle = '#558b2f';
+                        ctx.beginPath();
+                        ctx.arc(deco.x, deco.y, deco.size * 0.4, 0, Math.PI * 2);
+                        ctx.arc(deco.x - deco.size * 0.3, deco.y + deco.size * 0.1, deco.size * 0.35, 0, Math.PI * 2);
+                        ctx.arc(deco.x + deco.size * 0.3, deco.y + deco.size * 0.1, deco.size * 0.35, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'stalactite':
+                        ctx.fillStyle = '#616161';
+                        ctx.beginPath();
+                        ctx.moveTo(deco.x, deco.y);
+                        ctx.lineTo(deco.x - deco.size * 0.2, deco.y);
+                        ctx.lineTo(deco.x, deco.y + deco.size);
+                        ctx.lineTo(deco.x + deco.size * 0.2, deco.y);
+                        ctx.fill();
+                        break;
+                    case 'crystal':
+                        ctx.fillStyle = '#9c27b0';
+                        ctx.save();
+                        ctx.translate(deco.x, deco.y);
+                        ctx.rotate(Math.PI / 4);
+                        ctx.fillRect(-deco.size * 0.3, -deco.size * 0.3, deco.size * 0.6, deco.size * 0.6);
+                        ctx.restore();
+                        ctx.fillStyle = '#ce93d8';
+                        ctx.save();
+                        ctx.translate(deco.x, deco.y);
+                        ctx.rotate(Math.PI / 4);
+                        ctx.fillRect(-deco.size * 0.15, -deco.size * 0.15, deco.size * 0.3, deco.size * 0.3);
+                        ctx.restore();
+                        break;
+                }
+            });
             
             if (mode === 'edit') {
                 ctx.strokeStyle = 'rgba(255,255,255,0.15)';
@@ -746,6 +1331,37 @@
                             ctx.strokeRect(o.startX, o.y, o.range, GRID);
                             ctx.setLineDash([]);
                         }
+                        break;
+                    
+                    case 'oneway':
+                        // 单向平台 - 半透明木板
+                        ctx.fillStyle = 'rgba(212, 165, 116, 0.8)';
+                        ctx.fillRect(o.x, o.y, GRID, 8);
+                        
+                        // 木纹
+                        ctx.strokeStyle = 'rgba(166, 124, 82, 0.8)';
+                        ctx.lineWidth = 1;
+                        for (let i = 0; i < 2; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(o.x, o.y + 2 + i * 3);
+                            ctx.lineTo(o.x + GRID, o.y + 2 + i * 3);
+                            ctx.stroke();
+                        }
+                        
+                        // 向上箭头指示（表示只能从下往上穿过）
+                        ctx.fillStyle = '#8b6f47';
+                        ctx.beginPath();
+                        ctx.moveTo(o.x + GRID/2, o.y + 12);
+                        ctx.lineTo(o.x + GRID/2 - 4, o.y + 18);
+                        ctx.lineTo(o.x + GRID/2 + 4, o.y + 18);
+                        ctx.fill();
+                        
+                        // 虚线边框
+                        ctx.strokeStyle = '#8b6f47';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([3, 3]);
+                        ctx.strokeRect(o.x, o.y, GRID, 8);
+                        ctx.setLineDash([]);
                         break;
                     
                     case 'bounce':
@@ -866,6 +1482,113 @@
                         ctx.fillRect(o.x + 4, o.y + GRID - 6, GRID - 8, 6);
                         break;
                     
+                    case 'switch':
+                        // 开关底座
+                        ctx.fillStyle = '#8b6f47';
+                        ctx.fillRect(o.x + 8, o.y + GRID - 8, GRID - 16, 8);
+                        // 开关按钮
+                        const switchActive = o.active || false;
+                        ctx.fillStyle = switchActive ? '#4caf50' : '#f44336';
+                        ctx.fillRect(o.x + 10, o.y + GRID - 16, GRID - 20, 8);
+                        ctx.strokeStyle = switchActive ? '#2e7d32' : '#c62828';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(o.x + 10, o.y + GRID - 16, GRID - 20, 8);
+                        // ID 标签
+                        if (mode === 'edit' && o.switchId) {
+                            ctx.fillStyle = '#000';
+                            ctx.font = 'bold 12px monospace';
+                            ctx.fillText(o.switchId, o.x + GRID/2 - 6, o.y + 12);
+                        }
+                        break;
+                    
+                    case 'door':
+                        // 检查是否应该打开
+                        let doorOpen = false;
+                        if (o.switchIds && o.switchIds.length > 0) {
+                            doorOpen = o.switchIds.every(id => {
+                                const sw = objects.find(s => s.type === 'switch' && s.switchId === id);
+                                return sw && sw.active;
+                            });
+                        }
+                        o.open = doorOpen;
+                        
+                        // 门框
+                        ctx.strokeStyle = '#8b6f47';
+                        ctx.lineWidth = 4;
+                        ctx.strokeRect(o.x, o.y, GRID, GRID);
+                        
+                        if (!doorOpen) {
+                            // 关闭的门（实心）
+                            ctx.fillStyle = '#d4a574';
+                            ctx.fillRect(o.x + 4, o.y + 4, GRID - 8, GRID - 8);
+                            // 木纹
+                            ctx.strokeStyle = '#a67c52';
+                            ctx.lineWidth = 2;
+                            for (let i = 0; i < 3; i++) {
+                                ctx.beginPath();
+                                ctx.moveTo(o.x + 4, o.y + 10 + i * 8);
+                                ctx.lineTo(o.x + GRID - 4, o.y + 10 + i * 8);
+                                ctx.stroke();
+                            }
+                            // 门把手
+                            ctx.fillStyle = '#ffd700';
+                            ctx.fillRect(o.x + GRID - 12, o.y + GRID/2 - 2, 4, 8);
+                        } else {
+                            // 打开的门（半透明）
+                            ctx.globalAlpha = 0.3;
+                            ctx.fillStyle = '#d4a574';
+                            ctx.fillRect(o.x + 4, o.y + 4, GRID - 8, GRID - 8);
+                            ctx.globalAlpha = 1;
+                        }
+                        
+                        // ID 标签
+                        if (mode === 'edit' && o.switchIds && o.switchIds.length > 0) {
+                            ctx.fillStyle = '#000';
+                            ctx.font = 'bold 10px monospace';
+                            ctx.fillText(o.switchIds.join(','), o.x + 4, o.y + 12);
+                        }
+                        break;
+                    
+                    case 'portal':
+                        // 传送门旋转效果
+                        const portalRotation = mode === 'test' ? (time * 0.1) % (Math.PI * 2) : 0;
+                        ctx.save();
+                        ctx.translate(o.x + GRID/2, o.y + GRID/2);
+                        ctx.rotate(portalRotation);
+                        
+                        // 外圈
+                        ctx.strokeStyle = o.portalId === 'A' ? '#2196f3' : '#ff9800';
+                        ctx.lineWidth = 4;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, GRID/2 - 4, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // 内圈
+                        ctx.strokeStyle = o.portalId === 'A' ? '#64b5f6' : '#ffb74d';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, GRID/3, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // 光芒
+                        for (let i = 0; i < 8; i++) {
+                            const angle = (Math.PI * 2 / 8) * i;
+                            ctx.beginPath();
+                            ctx.moveTo(Math.cos(angle) * (GRID/3 + 2), Math.sin(angle) * (GRID/3 + 2));
+                            ctx.lineTo(Math.cos(angle) * (GRID/2 - 6), Math.sin(angle) * (GRID/2 - 6));
+                            ctx.stroke();
+                        }
+                        
+                        ctx.restore();
+                        
+                        // ID 标签
+                        if (mode === 'edit') {
+                            ctx.fillStyle = '#000';
+                            ctx.font = 'bold 16px monospace';
+                            ctx.fillText(o.portalId || '?', o.x + GRID/2 - 6, o.y + GRID/2 + 6);
+                        }
+                        break;
+                    
                     case 'goal':
                         // 宝箱底部
                         ctx.fillStyle = '#8b6f47';
@@ -932,8 +1655,24 @@
                     player.idleTimer = 0;
                 }
                 
+                // 冲刺视觉效果
+                if (player.dashing) {
+                    squash = 1.2;
+                    stretch = 0.8;
+                    // 冲刺残影
+                    ctx.globalAlpha = 0.3;
+                    ctx.fillStyle = '#64b5f6';
+                    ctx.fillRect(player.x - player.dashDir.x * 10, player.y - player.dashDir.y * 10, 24, 32);
+                    ctx.globalAlpha = 1;
+                }
+                // 墙贴视觉效果
+                else if (player.wallSliding) {
+                    squash = 0.9;
+                    stretch = 1.1;
+                    offsetY = Math.sin(time * 0.2) * 1;
+                }
                 // 通关庆祝动画
-                if (player.celebrating) {
+                else if (player.celebrating) {
                     offsetY = Math.sin(time * 0.3) * 8 - 4;
                     squash = 1 + Math.sin(time * 0.4) * 0.1;
                     stretch = 1 + Math.cos(time * 0.4) * 0.1;
@@ -963,12 +1702,22 @@
                 ctx.translate(-12, -16);
                 
                 // 身体（蓝色小人）
-                ctx.fillStyle = '#42a5f5';
+                ctx.fillStyle = player.dashing ? '#90caf9' : '#42a5f5';
                 ctx.fillRect(0, offsetY, 24, 32);
                 
                 // 头部高光
-                ctx.fillStyle = '#64b5f6';
+                ctx.fillStyle = player.dashing ? '#bbdefb' : '#64b5f6';
                 ctx.fillRect(2, offsetY + 2, 20, 10);
+                
+                // 墙贴指示（墙边的手）
+                if (player.wallSliding) {
+                    ctx.fillStyle = '#1976d2';
+                    if (player.onWallLeft) {
+                        ctx.fillRect(-4, offsetY + 12, 4, 8);
+                    } else if (player.onWallRight) {
+                        ctx.fillRect(24, offsetY + 12, 4, 8);
+                    }
+                }
                 
                 // 眼睛（Idle 时偶尔眨眼）
                 const blinking = player.idleTimer > 0 && player.idleTimer % 120 > 115 && player.idleTimer % 120 < 120;
@@ -990,8 +1739,8 @@
                     ctx.beginPath();
                     ctx.arc(12, offsetY + 20, 6, 0, Math.PI);
                     ctx.fill();
-                } else if (player.vy < -5) {
-                    // 跳跃时开心
+                } else if (player.vy < -5 || player.dashing) {
+                    // 跳跃/冲刺时开心
                     ctx.fillStyle = '#000';
                     ctx.fillRect(8, offsetY + 18, 8, 2);
                 }
@@ -1030,6 +1779,35 @@
                 }
                 
                 ctx.restore();
+                
+                // 冲刺冷却指示器
+                if (player.dashCooldown > 0) {
+                    const cooldownPercent = player.dashCooldown / 60;
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.fillRect(player.x, player.y - 8, 24, 4);
+                    ctx.fillStyle = '#64b5f6';
+                    ctx.fillRect(player.x, player.y - 8, 24 * (1 - cooldownPercent), 4);
+                }
+            }
+            
+            // 绘制选中物体的高亮
+            if (mode === 'edit' && selectedObjects.length > 0) {
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 3;
+                selectedObjects.forEach(o => {
+                    ctx.strokeRect(o.x, o.y, GRID, GRID);
+                });
+            }
+            
+            // 绘制选择框
+            if (mode === 'edit' && selectionBox) {
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+                ctx.fillRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                ctx.setLineDash([]);
             }
         }
         
@@ -1048,7 +1826,17 @@
                 jumpBufferTimer: 0,
                 jumpHeld: false,
                 idleTimer: 0,
-                celebrating: false
+                celebrating: false,
+                // 墙跳
+                onWallLeft: false,
+                onWallRight: false,
+                wallSliding: false,
+                // 冲刺
+                canDash: true,
+                dashing: false,
+                dashTimer: 0,
+                dashCooldown: 0,
+                dashDir: { x: 0, y: 0 }
             };
             startTime = Date.now();
             elapsedTime = 0;
@@ -1099,20 +1887,59 @@
             // 快捷键
             if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
             if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
+            
+            // 复制粘贴 - 支持选中区域
             if (e.ctrlKey && e.key === 'c') { 
-                e.preventDefault(); 
-                clipboard = JSON.parse(JSON.stringify(objects));
-                alert('已复制关卡！');
-            }
-            if (e.ctrlKey && e.key === 'v') { 
-                e.preventDefault(); 
-                if (clipboard) {
-                    objects = JSON.parse(JSON.stringify(clipboard));
-                    saveHistory();
-                    render();
-                    alert('已粘贴关卡！');
+                e.preventDefault();
+                if (selectedObjects.length > 0) {
+                    clipboard = JSON.parse(JSON.stringify(selectedObjects));
+                    alert(`已复制 ${selectedObjects.length} 个物体！`);
+                } else {
+                    clipboard = JSON.parse(JSON.stringify(objects));
+                    alert('已复制整个关卡！');
                 }
             }
+            if (e.ctrlKey && e.key === 'v') { 
+                e.preventDefault();
+                if (clipboard) {
+                    if (selectedObjects.length > 0 && clipboard.length < objects.length) {
+                        // 粘贴选中的物体（偏移一点避免重叠）
+                        const newObjects = JSON.parse(JSON.stringify(clipboard));
+                        newObjects.forEach(o => {
+                            o.x += GRID;
+                            o.y += GRID;
+                            if (o.startX !== undefined) o.startX += GRID;
+                        });
+                        objects.push(...newObjects);
+                        selectedObjects = newObjects;
+                        saveHistory();
+                        render();
+                        alert(`已粘贴 ${newObjects.length} 个物体！`);
+                    } else {
+                        // 粘贴整个关卡
+                        objects = JSON.parse(JSON.stringify(clipboard));
+                        saveHistory();
+                        render();
+                        alert('已粘贴关卡！');
+                    }
+                }
+            }
+            
+            // Delete 删除选中
+            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObjects.length > 0 && mode === 'edit') {
+                e.preventDefault();
+                objects = objects.filter(o => !selectedObjects.includes(o));
+                selectedObjects = [];
+                saveHistory();
+                render();
+            }
+            
+            // Escape 取消选择
+            if (e.key === 'Escape' && selectedObjects.length > 0) {
+                selectedObjects = [];
+                render();
+            }
+            
             if (e.ctrlKey && e.key === 's') {
                 e.preventDefault();
                 document.getElementById('saveBtn').click();
@@ -1139,6 +1966,29 @@
                     player.jumpHeld = true;
                 }
             }
+            
+            // 冲刺输入（Shift 键）
+            if (mode === 'test' && (e.key === 'Shift') && player.canDash && player.dashCooldown <= 0) {
+                e.preventDefault();
+                // 确定冲刺方向
+                const inputX = (keys.ArrowLeft || keys.a || keys.A) ? -1 : (keys.ArrowRight || keys.d || keys.D) ? 1 : 0;
+                const inputY = (keys.ArrowUp || keys.w || keys.W) ? -1 : (keys.ArrowDown || keys.s || keys.S) ? 1 : 0;
+                
+                // 如果没有方向输入，默认面向右
+                if (inputX === 0 && inputY === 0) {
+                    player.dashDir = { x: 1, y: 0 };
+                } else {
+                    // 归一化方向
+                    const len = Math.sqrt(inputX * inputX + inputY * inputY);
+                    player.dashDir = { x: inputX / len, y: inputY / len };
+                }
+                
+                player.dashing = true;
+                player.dashTimer = 10; // 冲刺持续帧数
+                player.canDash = false;
+                player.dashCooldown = 60; // 冷却时间（帧）
+                playSound('jump');
+            }
         };
         window.onkeyup = e => {
             keys[e.key] = false;
@@ -1163,62 +2013,132 @@
             }
         }
         
-        // 游戏循环
-        function loop() {
+        // 游戏循环 - 固定时间步长（60fps）
+        let lastTime = 0;
+        const targetFPS = 60;
+        const frameTime = 1000 / targetFPS;
+        
+        function loop(currentTime = 0) {
             if (mode !== 'test' || !player) return;
             
-            time++;
+            // 计算时间差
+            const deltaTime = currentTime - lastTime;
             
-            // 更新计时器
-            elapsedTime = Date.now() - startTime;
-            const sec = Math.floor(elapsedTime / 1000);
-            const ms = Math.floor((elapsedTime % 1000) / 10);
-            document.getElementById('timer').textContent = `⏱️ ${sec}.${ms.toString().padStart(2, '0')}s`;
+            // 只有当时间差大于目标帧时间时才更新
+            if (deltaTime >= frameTime) {
+                lastTime = currentTime - (deltaTime % frameTime);
+                
+                time++;
+                
+                // 更新计时器
+                elapsedTime = Date.now() - startTime;
+                const sec = Math.floor(elapsedTime / 1000);
+                const ms = Math.floor((elapsedTime % 1000) / 10);
+                document.getElementById('timer').textContent = `⏱️ ${sec}.${ms.toString().padStart(2, '0')}s`;
             
             // ===== Celeste 风格移动 =====
             const inputX = (keys.ArrowLeft || keys.a || keys.A) ? -1 : (keys.ArrowRight || keys.d || keys.D) ? 1 : 0;
             
-            // 加速度系统
-            const accel = player.ground ? PHYSICS.groundAccel : PHYSICS.airAccel;
-            const targetVx = inputX * PHYSICS.moveSpeed;
+            // 冲刺冷却
+            if (player.dashCooldown > 0) player.dashCooldown--;
             
-            if (inputX !== 0) {
-                player.vx += (targetVx - player.vx) * accel;
+            // 冲刺逻辑
+            if (player.dashing && player.dashTimer > 0) {
+                player.dashTimer--;
+                // 冲刺速度
+                const dashSpeed = 12;
+                player.vx = player.dashDir.x * dashSpeed;
+                player.vy = player.dashDir.y * dashSpeed;
+                
+                // 冲刺粒子效果
+                if (time % 2 === 0) {
+                    for (let i = 0; i < 3; i++) {
+                        particles.push(new Particle(
+                            player.x + 12 + (Math.random() - 0.5) * 20,
+                            player.y + 16 + (Math.random() - 0.5) * 28,
+                            (Math.random() - 0.5) * 2,
+                            (Math.random() - 0.5) * 2,
+                            '#64b5f6',
+                            15,
+                            4
+                        ));
+                    }
+                }
+                
+                if (player.dashTimer <= 0) {
+                    player.dashing = false;
+                    player.vx *= 0.5; // 冲刺结束后减速
+                    player.vy *= 0.5;
+                }
             } else {
-                // 摩擦力
-                const friction = player.ground ? PHYSICS.friction : PHYSICS.airFriction;
-                player.vx *= friction;
-                if (Math.abs(player.vx) < 0.1) player.vx = 0;
+                // 正常移动（非冲刺状态）
+                
+                // 加速度系统
+                const accel = player.ground ? PHYSICS.groundAccel : PHYSICS.airAccel;
+                const targetVx = inputX * PHYSICS.moveSpeed;
+                
+                if (inputX !== 0) {
+                    player.vx += (targetVx - player.vx) * accel;
+                } else {
+                    // 摩擦力
+                    const friction = player.ground ? PHYSICS.friction : PHYSICS.airFriction;
+                    player.vx *= friction;
+                    if (Math.abs(player.vx) < 0.1) player.vx = 0;
+                }
+                
+                // 土狼时间和跳跃缓冲
+                if (player.ground) {
+                    player.coyoteTimer = PHYSICS.coyoteTime;
+                    player.canDash = true; // 落地恢复冲刺
+                } else {
+                    player.coyoteTimer--;
+                }
+                
+                if (player.jumpBufferTimer > 0) player.jumpBufferTimer--;
+                
+                // 跳跃逻辑（包括墙跳）
+                if (player.jumpBufferTimer > 0) {
+                    if (player.coyoteTimer > 0) {
+                        // 普通跳跃
+                        player.vy = PHYSICS.jumpSpeed;
+                        player.jumpBufferTimer = 0;
+                        player.coyoteTimer = 0;
+                        playSound('jump');
+                        createParticles(player.x, player.y, 8, 'jump');
+                    } else if (player.onWallLeft || player.onWallRight) {
+                        // 墙跳
+                        player.vy = PHYSICS.jumpSpeed * 0.9;
+                        player.vx = player.onWallLeft ? 6 : -6; // 向外跳
+                        player.jumpBufferTimer = 0;
+                        player.onWallLeft = false;
+                        player.onWallRight = false;
+                        player.wallSliding = false;
+                        player.canDash = true; // 墙跳恢复冲刺
+                        playSound('jump');
+                        createParticles(player.x, player.y, 8, 'jump');
+                    }
+                }
+                
+                // 可变跳跃高度（按住跳跃 = 低重力，松开 = 高重力）
+                let currentGravity = PHYSICS.gravity;
+                
+                // 墙贴和墙滑
+                if ((player.onWallLeft || player.onWallRight) && !player.ground && player.vy > 0) {
+                    player.wallSliding = true;
+                    currentGravity = 0.15; // 墙滑重力更小
+                    player.vy = Math.min(player.vy, 2); // 限制墙滑速度
+                } else {
+                    player.wallSliding = false;
+                    if (player.vy < 0 && player.jumpHeld) {
+                        currentGravity = PHYSICS.jumpHoldGravity;
+                    } else if (player.vy < 0 && !player.jumpHeld) {
+                        currentGravity = PHYSICS.jumpReleaseGravity;
+                    }
+                }
+                
+                player.vy += currentGravity;
+                player.vy = Math.min(player.vy, PHYSICS.maxFallSpeed);
             }
-            
-            // 土狼时间和跳跃缓冲
-            if (player.ground) {
-                player.coyoteTimer = PHYSICS.coyoteTime;
-            } else {
-                player.coyoteTimer--;
-            }
-            
-            if (player.jumpBufferTimer > 0) player.jumpBufferTimer--;
-            
-            // 跳跃逻辑
-            if (player.jumpBufferTimer > 0 && player.coyoteTimer > 0) {
-                player.vy = PHYSICS.jumpSpeed;
-                player.jumpBufferTimer = 0;
-                player.coyoteTimer = 0;
-                playSound('jump');
-                createParticles(player.x, player.y, 8, 'jump');
-            }
-            
-            // 可变跳跃高度（按住跳跃 = 低重力，松开 = 高重力）
-            let currentGravity = PHYSICS.gravity;
-            if (player.vy < 0 && player.jumpHeld) {
-                currentGravity = PHYSICS.jumpHoldGravity;
-            } else if (player.vy < 0 && !player.jumpHeld) {
-                currentGravity = PHYSICS.jumpReleaseGravity;
-            }
-            
-            player.vy += currentGravity;
-            player.vy = Math.min(player.vy, PHYSICS.maxFallSpeed);
             
             // 应用速度
             player.x += player.vx;
@@ -1228,6 +2148,8 @@
             player.y += player.vy;
             const wasGround = player.ground;
             player.ground = false;
+            player.onWallLeft = false;
+            player.onWallRight = false;
             
             // 碰撞检测
             objects.forEach(o => {
@@ -1249,15 +2171,92 @@
                             player.y = p.y + p.h;
                             player.vy = 0;
                         }
+                        // 左右碰撞（墙壁检测）
+                        else {
+                            if (player.vx > 0) {
+                                player.x = p.x - 24;
+                                player.onWallRight = true;
+                            } else if (player.vx < 0) {
+                                player.x = p.x + p.w;
+                                player.onWallLeft = true;
+                            }
+                            player.vx = 0;
+                        }
+                    }
+                }
+                
+                // 门 - 只有关闭时才碰撞
+                if (o.type === 'door' && !o.open) {
+                    if (hit(pl, p)) {
+                        // 从上方落下
+                        if (player.vy > 0 && player.y + 32 - player.vy <= p.y + 4) {
+                            player.y = p.y - 32;
+                            player.vy = 0;
+                            player.ground = true;
+                        } 
+                        // 从下方撞击
+                        else if (player.vy < 0 && player.y - player.vy >= p.y + p.h - 4) {
+                            player.y = p.y + p.h;
+                            player.vy = 0;
+                        }
                         // 左右碰撞
                         else {
                             if (player.vx > 0) {
                                 player.x = p.x - 24;
+                                player.onWallRight = true;
                             } else if (player.vx < 0) {
                                 player.x = p.x + p.w;
+                                player.onWallLeft = true;
                             }
                             player.vx = 0;
                         }
+                    }
+                }
+                
+                // 开关 - 踩上去触发
+                if (o.type === 'switch') {
+                    const switchP = { x: o.x, y: o.y + GRID - 16, w: GRID, h: 16 };
+                    if (player.vy > 0 && 
+                        player.x + 24 > switchP.x && player.x < switchP.x + switchP.w &&
+                        player.y + 32 > switchP.y && player.y + 32 < switchP.y + switchP.h + 4 &&
+                        player.y + 32 - player.vy <= switchP.y) {
+                        o.active = true;
+                    }
+                }
+                
+                // 传送门 - 传送
+                if (o.type === 'portal' && hit(pl, p)) {
+                    if (!player.teleporting) {
+                        // 查找配对的传送门
+                        const pair = objects.find(portal => 
+                            portal.type === 'portal' && 
+                            portal !== o && 
+                            portal.portalId === o.pairId
+                        );
+                        if (pair) {
+                            player.x = pair.x + 4;
+                            player.y = pair.y + 4;
+                            player.teleporting = true;
+                            playSound('coin');
+                            createParticles(o.x, o.y, 20, 'coin');
+                            createParticles(pair.x, pair.y, 20, 'coin');
+                            setTimeout(() => { player.teleporting = false; }, 500);
+                        }
+                    }
+                }
+                
+                // 单向平台 - 只能从下往上穿过
+                if (o.type === 'oneway') {
+                    const oneWayP = { x: o.x, y: o.y, w: GRID, h: 8 };
+                    // 只检测从上方落下的情况
+                    if (player.vy > 0 && 
+                        player.x + 24 > oneWayP.x && player.x < oneWayP.x + oneWayP.w &&
+                        player.y + 32 > oneWayP.y && player.y + 32 < oneWayP.y + oneWayP.h + 4 &&
+                        player.y + 32 - player.vy <= oneWayP.y) {
+                        // 站在单向平台上
+                        player.y = oneWayP.y - 32;
+                        player.vy = 0;
+                        player.ground = true;
                     }
                 }
                 
@@ -1311,7 +2310,9 @@
                 respawn();
             }
             
-            render();
+                render();
+            }
+            
             requestAnimationFrame(loop);
         }
         
