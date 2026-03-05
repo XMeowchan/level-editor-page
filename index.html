@@ -839,7 +839,7 @@
             }
         }
         
-        saveHistory();
+        // 初始历史记录将在 loadDraft 之后保存
         
         // ===== 音效系统 =====
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
