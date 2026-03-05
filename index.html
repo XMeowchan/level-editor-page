@@ -1188,6 +1188,7 @@
             
             if (tool === 'erase') {
                 objects = objects.filter(o => !(o.x === x && o.y === y));
+                console.log('擦除物体，剩余:', objects.length);
             } else {
                 objects = objects.filter(o => !(o.x === x && o.y === y));
                 if (tool === 'spawn') objects = objects.filter(o => o.type !== 'spawn');
@@ -1208,6 +1209,7 @@
                     obj.dir = 1;
                 }
                 objects.push(obj);
+                console.log('添加物体:', tool, '总数:', objects.length);
             }
             render();
         }
