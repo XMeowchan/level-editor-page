@@ -2463,6 +2463,7 @@
         };
         
         // 初始化 - 优先加载草稿
+        console.log('开始初始化...');
         if (!loadDraft()) {
             // 如果没有草稿，尝试加载保存的关卡
             const saved = localStorage.getItem('level-ultimate');
@@ -2482,9 +2483,14 @@
         }
         render();
         
-        // 监听关卡名和作者输入，自动保存草稿
-        document.getElementById('levelName').addEventListener('input', autosaveDraft);
-        document.getElementById('levelAuthor').addEventListener('input', autosaveDraft);
+        console.log('初始化完成，物体数:', objects.length);
+        
+        // 延迟绑定监听器，避免初始化时触发自动保存
+        setTimeout(() => {
+            console.log('绑定输入监听器');
+            document.getElementById('levelName').addEventListener('input', autosaveDraft);
+            document.getElementById('levelAuthor').addEventListener('input', autosaveDraft);
+        }, 100);
     </script>
 </body>
 </html>
