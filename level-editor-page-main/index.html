@@ -67,12 +67,25 @@
         .tool-group.actions {
             grid-template-columns: repeat(2, 1fr);
         }
+        .tool-btn, .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .tool-btn .icon, .action-btn .icon {
+            font-size: 24px;
+        }
+        .tool-btn .label, .action-btn .label {
+            font-size: 10px;
+            line-height: 1;
+            opacity: 0.9;
+        }
         button {
-            padding: 12px 8px;
+            padding: 8px 4px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 20px;
             font-weight: 600;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 3px 0 rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
@@ -322,35 +335,77 @@
             <div class="sidebar">
                 <h3>🎨 工具</h3>
                 <div class="tool-group">
-                    <button class="tool" data-tool="select" title="选择">👆</button>
-                    <button class="tool active" data-tool="platform" title="平台">🟫</button>
-                    <button class="tool" data-tool="oneway" title="单向">⬆️</button>
-                    <button class="tool" data-tool="moving" title="移动">🔄</button>
-                    <button class="tool" data-tool="bounce" title="弹跳">🔵</button>
-                    <button class="tool" data-tool="enemy" title="敌人">👾</button>
-                    <button class="tool" data-tool="spike" title="尖刺">🔺</button>
-                    <button class="tool" data-tool="coin" title="金币">💰</button>
-                    <button class="tool" data-tool="spawn" title="出生">🟢</button>
-                    <button class="tool" data-tool="goal" title="终点">⭐</button>
-                    <button class="tool" data-tool="erase" title="擦除">🧹</button>
+                    <button class="tool tool-btn" data-tool="select">
+                        <span class="icon">👆</span><span class="label">选择</span>
+                    </button>
+                    <button class="tool tool-btn active" data-tool="platform">
+                        <span class="icon">🟫</span><span class="label">平台</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="oneway">
+                        <span class="icon">⬆️</span><span class="label">单向</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="moving">
+                        <span class="icon">🔄</span><span class="label">移动</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="bounce">
+                        <span class="icon">🔵</span><span class="label">弹跳</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="enemy">
+                        <span class="icon">👾</span><span class="label">敌人</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="spike">
+                        <span class="icon">🔺</span><span class="label">尖刺</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="coin">
+                        <span class="icon">💰</span><span class="label">金币</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="spawn">
+                        <span class="icon">🟢</span><span class="label">出生</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="goal">
+                        <span class="icon">⭐</span><span class="label">终点</span>
+                    </button>
+                    <button class="tool tool-btn" data-tool="erase">
+                        <span class="icon">🧹</span><span class="label">擦除</span>
+                    </button>
                 </div>
                 
                 <h3>⚡ 操作</h3>
                 <div class="tool-group actions">
-                    <button class="action" id="undoBtn" title="撤销">↶</button>
-                    <button class="action" id="redoBtn" title="重做">↷</button>
-                    <button class="action" id="gridBtn" title="网格">📏</button>
-                    <button class="action" id="testBtn" title="测试">▶️</button>
-                    <button class="action" id="editBtn" style="display:none" title="编辑">✏️</button>
-                    <button class="action" id="clearBtn" title="清空">🗑️</button>
+                    <button class="action action-btn" id="undoBtn">
+                        <span class="icon">↶</span><span class="label">撤销</span>
+                    </button>
+                    <button class="action action-btn" id="redoBtn">
+                        <span class="icon">↷</span><span class="label">重做</span>
+                    </button>
+                    <button class="action action-btn" id="gridBtn">
+                        <span class="icon">📏</span><span class="label">网格</span>
+                    </button>
+                    <button class="action action-btn" id="testBtn">
+                        <span class="icon">▶️</span><span class="label">测试</span>
+                    </button>
+                    <button class="action action-btn" id="editBtn" style="display:none">
+                        <span class="icon">✏️</span><span class="label">编辑</span>
+                    </button>
+                    <button class="action action-btn" id="clearBtn">
+                        <span class="icon">🗑️</span><span class="label">清空</span>
+                    </button>
                 </div>
                 
                 <h3>💾 文件</h3>
                 <div class="tool-group actions">
-                    <button class="action" id="saveBtn" title="保存">💾</button>
-                    <button class="action" id="loadBtn" title="加载">📂</button>
-                    <button class="action" id="examplesBtn" title="示例">📚</button>
-                    <button class="action" id="configBtn" title="配置">⚙️</button>
+                    <button class="action action-btn" id="saveBtn">
+                        <span class="icon">💾</span><span class="label">保存</span>
+                    </button>
+                    <button class="action action-btn" id="loadBtn">
+                        <span class="icon">📂</span><span class="label">加载</span>
+                    </button>
+                    <button class="action action-btn" id="examplesBtn">
+                        <span class="icon">📚</span><span class="label">示例</span>
+                    </button>
+                    <button class="action action-btn" id="configBtn">
+                        <span class="icon">⚙️</span><span class="label">配置</span>
+                    </button>
                 </div>
             </div>
         </div>
