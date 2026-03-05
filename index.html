@@ -915,7 +915,7 @@
                     t.life--;
                     const alpha = t.life / 15;
                     ctx.globalAlpha = alpha * 0.3;
-                    ctx.fillStyle = '#66bb6a';
+                    ctx.fillStyle = '#42a5f5';
                     ctx.fillRect(t.x - 10, t.y - 14, 20, 28);
                     ctx.globalAlpha = 1;
                 });
@@ -933,12 +933,12 @@
                 ctx.scale(squash, stretch);
                 ctx.translate(-12, -16);
                 
-                // 身体（绿色小人）
-                ctx.fillStyle = '#66bb6a';
+                // 身体（蓝色小人）
+                ctx.fillStyle = '#42a5f5';
                 ctx.fillRect(0, offsetY, 24, 32);
                 
                 // 头部高光
-                ctx.fillStyle = '#81c784';
+                ctx.fillStyle = '#64b5f6';
                 ctx.fillRect(2, offsetY + 2, 20, 10);
                 
                 // 眼睛
@@ -959,7 +959,7 @@
                 // 手臂（跑步时摆动）
                 if (player.ground && player.vx !== 0) {
                     const armSwing = Math.sin(time * 0.4) * 3;
-                    ctx.fillStyle = '#558b2f';
+                    ctx.fillStyle = '#1976d2';
                     ctx.fillRect(-2, offsetY + 12 + armSwing, 3, 8);
                     ctx.fillRect(23, offsetY + 12 - armSwing, 3, 8);
                 }
@@ -967,11 +967,11 @@
                 // 腿部（跑步时摆动）
                 if (player.ground && player.vx !== 0) {
                     const legSwing = Math.sin(time * 0.4) * 2;
-                    ctx.fillStyle = '#558b2f';
+                    ctx.fillStyle = '#1976d2';
                     ctx.fillRect(6, offsetY + 26 + legSwing, 5, 6);
                     ctx.fillRect(13, offsetY + 26 - legSwing, 5, 6);
                 } else {
-                    ctx.fillStyle = '#558b2f';
+                    ctx.fillStyle = '#1976d2';
                     ctx.fillRect(6, offsetY + 26, 5, 6);
                     ctx.fillRect(13, offsetY + 26, 5, 6);
                 }
