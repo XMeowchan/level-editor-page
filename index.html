@@ -1293,7 +1293,7 @@
                 }
                 
                 // 终点 - 完成
-                if (o.type === 'goal' && hit(pl, p)) {
+                if (o.type === 'goal' && hit(pl, p) && !player.celebrating) {
                     playSound('win');
                     createParticles(o.x, o.y, 30, 'coin');
                     player.celebrating = true;
