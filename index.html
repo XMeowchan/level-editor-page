@@ -933,6 +933,47 @@
                 ctx.scale(squash, stretch);
                 ctx.translate(-12, -16);
                 
+            // 玩家
+            if (mode === 'test' && player) {
+                let offsetY = 0, squash = 1, stretch = 1;
+                
+                // Idle 动画计时器
+                if (player.ground && player.vx === 0 && !player.celebrating) {
+                    player.idleTimer++;
+                } else {
+                    player.idleTimer = 0;
+                }
+                
+                // 通关庆祝动画
+                if (player.celebrating) {
+                    offsetY = Math.sin(time * 0.3) * 8 - 4;
+                    squash = 1 + Math.sin(time * 0.4) * 0.1;
+                    stretch = 1 + Math.cos(time * 0.4) * 0.1;
+                }
+                // 跳跃动画
+                else if (!player.ground && player.vy < 0) { 
+                    stretch = 1.1; squash = 0.9; 
+                }
+                // 下落动画
+                else if (!player.ground && player.vy > 5) { 
+                    stretch = 0.9; squash = 1.1; 
+                }
+                // 跑步动画
+                else if (player.ground && player.vx !== 0) {
+                    offsetY = Math.sin(time * 0.3) * 2;
+                }
+                // Idle 动画（呼吸 + 偶尔眨眼）
+                else if (player.ground && player.vx === 0) {
+                    offsetY = Math.sin(time * 0.1) * 1;
+                    squash = 1 + Math.sin(time * 0.15) * 0.03;
+                    stretch = 1 - Math.sin(time * 0.15) * 0.03;
+                }
+                
+                ctx.save();
+                ctx.translate(player.x + 12, player.y + 16);
+                ctx.scale(squash, stretch);
+                ctx.translate(-12, -16);
+                
                 // 身体（蓝色小人）
                 ctx.fillStyle = '#42a5f5';
                 ctx.fillRect(0, offsetY, 24, 32);
@@ -941,31 +982,55 @@
                 ctx.fillStyle = '#64b5f6';
                 ctx.fillRect(2, offsetY + 2, 20, 10);
                 
-                // 眼睛
+                // 眼睛（Idle 时偶尔眨眼）
+                const blinking = player.idleTimer > 0 && player.idleTimer % 120 > 115 && player.idleTimer % 120 < 120;
                 ctx.fillStyle = '#fff';
                 const eyeY = player.vy < 0 ? 6 : 8;
-                ctx.fillRect(6, offsetY + eyeY, 5, 5);
-                ctx.fillRect(13, offsetY + eyeY, 5, 5);
-                ctx.fillStyle = '#000';
-                ctx.fillRect(7, offsetY + eyeY + 1, 3, 3);
-                ctx.fillRect(14, offsetY + eyeY + 1, 3, 3);
+                const eyeH = blinking ? 2 : 5;
+                ctx.fillRect(6, offsetY + eyeY, 5, eyeH);
+                ctx.fillRect(13, offsetY + eyeY, 5, eyeH);
+                if (!blinking) {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(7, offsetY + eyeY + 1, 3, 3);
+                    ctx.fillRect(14, offsetY + eyeY + 1, 3, 3);
+                }
                 
                 // 嘴巴
-                if (player.vy < -5) {
+                if (player.celebrating) {
+                    // 通关时大笑
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(12, offsetY + 20, 6, 0, Math.PI);
+                    ctx.fill();
+                } else if (player.vy < -5) {
+                    // 跳跃时开心
                     ctx.fillStyle = '#000';
                     ctx.fillRect(8, offsetY + 18, 8, 2);
                 }
                 
-                // 手臂（跑步时摆动）
-                if (player.ground && player.vx !== 0) {
+                // 手臂
+                if (player.celebrating) {
+                    // 通关时举手欢呼
+                    const wave = Math.sin(time * 0.5) * 10;
+                    ctx.fillStyle = '#1976d2';
+                    ctx.fillRect(-2, offsetY + 4 + wave, 3, 10);
+                    ctx.fillRect(23, offsetY + 4 - wave, 3, 10);
+                } else if (player.ground && player.vx !== 0) {
+                    // 跑步时摆动
                     const armSwing = Math.sin(time * 0.4) * 3;
                     ctx.fillStyle = '#1976d2';
                     ctx.fillRect(-2, offsetY + 12 + armSwing, 3, 8);
                     ctx.fillRect(23, offsetY + 12 - armSwing, 3, 8);
                 }
                 
-                // 腿部（跑步时摆动）
-                if (player.ground && player.vx !== 0) {
+                // 腿部
+                if (player.celebrating) {
+                    // 通关时跳跃姿势
+                    ctx.fillStyle = '#1976d2';
+                    ctx.fillRect(6, offsetY + 28, 5, 4);
+                    ctx.fillRect(13, offsetY + 28, 5, 4);
+                } else if (player.ground && player.vx !== 0) {
+                    // 跑步时摆动
                     const legSwing = Math.sin(time * 0.4) * 2;
                     ctx.fillStyle = '#1976d2';
                     ctx.fillRect(6, offsetY + 26 + legSwing, 5, 6);
@@ -993,7 +1058,9 @@
                 ground: false,
                 coyoteTimer: 0,
                 jumpBufferTimer: 0,
-                jumpHeld: false
+                jumpHeld: false,
+                idleTimer: 0,
+                celebrating: false
             };
             startTime = Date.now();
             elapsedTime = 0;
@@ -1241,9 +1308,12 @@
                 if (o.type === 'goal' && hit(pl, p)) {
                     playSound('win');
                     createParticles(o.x, o.y, 30, 'coin');
+                    player.celebrating = true;
                     const finalTime = (elapsedTime / 1000).toFixed(2);
-                    alert(`🎉 完成！用时：${finalTime}秒`);
-                    document.getElementById('editBtn').click();
+                    setTimeout(() => {
+                        alert(`🎉 完成！用时：${finalTime}秒`);
+                        document.getElementById('editBtn').click();
+                    }, 1500);
                 }
             });
             
