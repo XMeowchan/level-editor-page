@@ -1064,10 +1064,12 @@
         
         // 画布交互
         canvas.onmousedown = e => { 
+            console.log('鼠标按下, 按钮:', e.button, '工具:', tool, '模式:', mode);
             if (e.button === 2) { // 右键
                 e.preventDefault();
                 editProperties(e);
             } else if (tool === 'select') {
+                console.log('选择工具分支');
                 // 选择工具逻辑
                 const r = canvas.getBoundingClientRect();
                 const mx = (e.clientX - r.left) / r.width * W;
@@ -1094,6 +1096,7 @@
                     if (!e.shiftKey) selectedObjects = [];
                 }
             } else {
+                console.log('绘制分支, drawing =', true);
                 drawing = true; 
                 draw(e); 
             }
