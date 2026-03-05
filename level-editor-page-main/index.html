@@ -30,31 +30,49 @@
             letter-spacing: -0.5px;
             color: #558b2f;
         }
-        .toolbar {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+        .main-layout {
             display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .canvas-area {
+            flex: 1;
+            min-width: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
             box-shadow: 0 4px 0 rgba(139, 111, 71, 0.3), 0 8px 32px rgba(0,0,0,0.15);
             border: 3px solid #8b6f47;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        .sidebar h3 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #558b2f;
+            border-bottom: 2px solid #aed581;
+            padding-bottom: 8px;
         }
         .tool-group {
-            display: flex;
-            gap: 8px;
-            padding: 8px;
-            background: rgba(139, 195, 74, 0.1);
-            border-radius: 8px;
-            border: 2px solid #aed581;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        .tool-group.actions {
+            grid-template-columns: repeat(2, 1fr);
         }
         button {
-            padding: 10px 18px;
+            padding: 12px 8px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 600;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 3px 0 rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
@@ -73,28 +91,28 @@
         button[title]:hover::after {
             content: attr(title);
             position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 50%;
+            right: 100%;
+            transform: translateY(50%);
             background: rgba(0, 0, 0, 0.9);
             color: white;
             padding: 6px 10px;
             border-radius: 4px;
             font-size: 12px;
             white-space: nowrap;
-            margin-bottom: 8px;
+            margin-right: 8px;
             z-index: 1000;
             pointer-events: none;
         }
         button[title]:hover::before {
             content: '';
             position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 50%;
+            right: 100%;
+            transform: translateY(50%);
             border: 5px solid transparent;
-            border-top-color: rgba(0, 0, 0, 0.9);
-            margin-bottom: 3px;
+            border-left-color: rgba(0, 0, 0, 0.9);
+            margin-right: 3px;
             z-index: 1000;
             pointer-events: none;
         }
@@ -276,61 +294,64 @@
 <body>
     <div class="container">
         <h1>🎮 关卡编辑器 - 终极完整版</h1>
-        <div class="toolbar">
-            <!-- 工具区 -->
-            <div class="tool-group">
-                <button class="tool" data-tool="select" title="选择工具 (V)">👆</button>
-                <button class="tool active" data-tool="platform" title="平台 (P)">🟫</button>
-                <button class="tool" data-tool="oneway" title="单向平台 (O)">⬆️</button>
-                <button class="tool" data-tool="moving" title="移动平台 (M)">🔄</button>
-                <button class="tool" data-tool="bounce" title="弹跳板 (B)">🔵</button>
-            </div>
-            <div class="tool-group">
-                <button class="tool" data-tool="enemy" title="敌人 (E)">👾</button>
-                <button class="tool" data-tool="spike" title="尖刺 (K)">🔺</button>
-                <button class="tool" data-tool="coin" title="金币 (C)">💰</button>
-            </div>
-            <div class="tool-group">
-                <button class="tool" data-tool="spawn" title="出生点 (S)">🟢</button>
-                <button class="tool" data-tool="goal" title="终点 (F)">⭐</button>
-                <button class="tool" data-tool="erase" title="擦除 (X)">🧹</button>
-            </div>
-            <span class="spacer"></span>
-            <!-- 操作区 -->
-            <div class="tool-group">
-                <button class="action" id="undoBtn" title="撤销 (Ctrl+Z)">↶</button>
-                <button class="action" id="redoBtn" title="重做 (Ctrl+Y)">↷</button>
-                <button class="action" id="gridBtn" title="切换网格 (G)">📏</button>
-            </div>
-            <div class="tool-group">
-                <button class="action" id="testBtn" title="测试关卡 (T)">▶️</button>
-                <button class="action" id="editBtn" style="display:none" title="返回编辑 (T)">✏️</button>
-                <button class="action" id="clearBtn" title="清空关卡">🗑️</button>
-            </div>
-            <div class="tool-group">
-                <button class="action" id="saveBtn" title="保存关卡 (Ctrl+S)">💾</button>
-                <button class="action" id="loadBtn" title="加载关卡">📂</button>
-                <button class="action" id="examplesBtn" title="示例关卡">📚</button>
-                <button class="action" id="configBtn" title="物理配置">⚙️</button>
-            </div>
-        </div>
-        <div class="canvas-wrapper">
-            <div class="props-panel">
-                <div>
-                    <label>关卡名:</label>
-                    <input type="text" id="levelName" placeholder="我的关卡" value="我的关卡">
+        <div class="main-layout">
+            <!-- 左侧画布区 -->
+            <div class="canvas-area">
+                <div class="canvas-wrapper">
+                    <div class="props-panel">
+                        <div>
+                            <label>关卡名:</label>
+                            <input type="text" id="levelName" placeholder="我的关卡" value="我的关卡">
+                        </div>
+                        <div>
+                            <label>作者:</label>
+                            <input type="text" id="levelAuthor" placeholder="XMeow" value="XMeow">
+                        </div>
+                        <button class="action" id="helpBtn" style="margin-left: auto;">❓</button>
+                    </div>
+                    <canvas id="canvas" width="1600" height="900"></canvas>
+                    <div class="info">
+                        <span id="mode">✏️ 编辑模式</span>
+                        <span id="timer" class="timer"></span>
+                        <span id="pos"></span>
+                    </div>
                 </div>
-                <div>
-                    <label>作者:</label>
-                    <input type="text" id="levelAuthor" placeholder="XMeow" value="XMeow">
-                </div>
-                <button class="action" id="helpBtn" style="margin-left: auto;">❓ 帮助 (H)</button>
             </div>
-            <canvas id="canvas" width="1600" height="900"></canvas>
-            <div class="info">
-                <span id="mode">✏️ 编辑模式</span>
-                <span id="timer" class="timer"></span>
-                <span id="pos"></span>
+            
+            <!-- 右侧工具栏 -->
+            <div class="sidebar">
+                <h3>🎨 工具</h3>
+                <div class="tool-group">
+                    <button class="tool" data-tool="select" title="选择">👆</button>
+                    <button class="tool active" data-tool="platform" title="平台">🟫</button>
+                    <button class="tool" data-tool="oneway" title="单向">⬆️</button>
+                    <button class="tool" data-tool="moving" title="移动">🔄</button>
+                    <button class="tool" data-tool="bounce" title="弹跳">🔵</button>
+                    <button class="tool" data-tool="enemy" title="敌人">👾</button>
+                    <button class="tool" data-tool="spike" title="尖刺">🔺</button>
+                    <button class="tool" data-tool="coin" title="金币">💰</button>
+                    <button class="tool" data-tool="spawn" title="出生">🟢</button>
+                    <button class="tool" data-tool="goal" title="终点">⭐</button>
+                    <button class="tool" data-tool="erase" title="擦除">🧹</button>
+                </div>
+                
+                <h3>⚡ 操作</h3>
+                <div class="tool-group actions">
+                    <button class="action" id="undoBtn" title="撤销">↶</button>
+                    <button class="action" id="redoBtn" title="重做">↷</button>
+                    <button class="action" id="gridBtn" title="网格">📏</button>
+                    <button class="action" id="testBtn" title="测试">▶️</button>
+                    <button class="action" id="editBtn" style="display:none" title="编辑">✏️</button>
+                    <button class="action" id="clearBtn" title="清空">🗑️</button>
+                </div>
+                
+                <h3>💾 文件</h3>
+                <div class="tool-group actions">
+                    <button class="action" id="saveBtn" title="保存">💾</button>
+                    <button class="action" id="loadBtn" title="加载">📂</button>
+                    <button class="action" id="examplesBtn" title="示例">📚</button>
+                    <button class="action" id="configBtn" title="配置">⚙️</button>
+                </div>
             </div>
         </div>
     </div>
