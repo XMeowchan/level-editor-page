@@ -760,6 +760,25 @@
                 savedAt: new Date().toISOString()
             };
             localStorage.setItem('level-draft', JSON.stringify(draftData));
+            
+            // 显示保存指示器
+            showSaveIndicator();
+        }
+        
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            if (!indicator) {
+                const div = document.createElement('div');
+                div.id = 'saveIndicator';
+                div.style.cssText = 'position:fixed;top:80px;right:20px;background:rgba(76,175,80,0.9);color:white;padding:8px 16px;border-radius:6px;font-size:14px;z-index:9999;transition:opacity 0.3s;';
+                div.textContent = '✓ 已自动保存';
+                document.body.appendChild(div);
+                
+                setTimeout(() => {
+                    div.style.opacity = '0';
+                    setTimeout(() => div.remove(), 300);
+                }, 2000);
+            }
         }
         
         function loadDraft() {
@@ -777,9 +796,18 @@
                     const savedTime = new Date(draftData.savedAt);
                     const now = new Date();
                     const diffMinutes = Math.floor((now - savedTime) / 60000);
-                    if (diffMinutes < 60) {
-                        console.log(`✅ 已恢复草稿（${diffMinutes}分钟前保存）`);
-                    }
+                    
+                    const indicator = document.createElement('div');
+                    indicator.style.cssText = 'position:fixed;top:80px;right:20px;background:rgba(33,150,243,0.9);color:white;padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+                    indicator.innerHTML = `<strong>✓ 已恢复草稿</strong><br><small>${diffMinutes < 1 ? '刚刚' : diffMinutes + '分钟前'}保存</small>`;
+                    document.body.appendChild(indicator);
+                    
+                    setTimeout(() => {
+                        indicator.style.opacity = '0';
+                        indicator.style.transition = 'opacity 0.3s';
+                        setTimeout(() => indicator.remove(), 300);
+                    }, 3000);
+                    
                     return true;
                 } catch (e) {
                     console.error('恢复草稿失败:', e);
