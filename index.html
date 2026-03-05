@@ -747,6 +747,45 @@
             history.push(JSON.parse(JSON.stringify(objects)));
             historyIndex++;
             if (history.length > 50) { history.shift(); historyIndex--; }
+            
+            // 自动保存草稿到 localStorage
+            autosaveDraft();
+        }
+        
+        function autosaveDraft() {
+            const draftData = {
+                name: document.getElementById('levelName').value,
+                author: document.getElementById('levelAuthor').value,
+                objects: objects,
+                savedAt: new Date().toISOString()
+            };
+            localStorage.setItem('level-draft', JSON.stringify(draftData));
+        }
+        
+        function loadDraft() {
+            const draft = localStorage.getItem('level-draft');
+            if (draft) {
+                try {
+                    const draftData = JSON.parse(draft);
+                    objects = draftData.objects || [];
+                    document.getElementById('levelName').value = draftData.name || '我的关卡';
+                    document.getElementById('levelAuthor').value = draftData.author || 'XMeow';
+                    saveHistory();
+                    render();
+                    
+                    // 显示恢复提示
+                    const savedTime = new Date(draftData.savedAt);
+                    const now = new Date();
+                    const diffMinutes = Math.floor((now - savedTime) / 60000);
+                    if (diffMinutes < 60) {
+                        console.log(`✅ 已恢复草稿（${diffMinutes}分钟前保存）`);
+                    }
+                    return true;
+                } catch (e) {
+                    console.error('恢复草稿失败:', e);
+                }
+            }
+            return false;
         }
         
         function undo() {
@@ -2378,22 +2417,29 @@
             input.click();
         };
         
-        // 初始化
-        const saved = localStorage.getItem('level-ultimate');
-        if (saved) {
-            try { 
-                const levelData = JSON.parse(saved);
-                if (levelData.objects) {
-                    objects = levelData.objects;
-                    document.getElementById('levelName').value = levelData.name || '我的关卡';
-                    document.getElementById('levelAuthor').value = levelData.author || 'XMeow';
-                } else {
-                    objects = levelData;
-                }
-                saveHistory();
-            } catch {}
+        // 初始化 - 优先加载草稿
+        if (!loadDraft()) {
+            // 如果没有草稿，尝试加载保存的关卡
+            const saved = localStorage.getItem('level-ultimate');
+            if (saved) {
+                try { 
+                    const levelData = JSON.parse(saved);
+                    if (levelData.objects) {
+                        objects = levelData.objects;
+                        document.getElementById('levelName').value = levelData.name || '我的关卡';
+                        document.getElementById('levelAuthor').value = levelData.author || 'XMeow';
+                    } else {
+                        objects = levelData;
+                    }
+                    saveHistory();
+                } catch {}
+            }
         }
         render();
+        
+        // 监听关卡名和作者输入，自动保存草稿
+        document.getElementById('levelName').addEventListener('input', autosaveDraft);
+        document.getElementById('levelAuthor').addEventListener('input', autosaveDraft);
     </script>
 </body>
 </html>
