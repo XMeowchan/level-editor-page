@@ -458,7 +458,7 @@
         </div>
         <div class="config-item">
             <label>重力</label>
-            <input type="number" id="cfgGravity" step="0.05" value="0.5">
+            <input type="number" id="cfgGravity" step="0.05" value="1.0">
             <small>下落加速度</small>
         </div>
         <div class="config-item">
@@ -468,7 +468,7 @@
         </div>
         <div class="config-item">
             <label>按住跳跃重力</label>
-            <input type="number" id="cfgJumpHoldGravity" step="0.05" value="0.25">
+            <input type="number" id="cfgJumpHoldGravity" step="0.05" value="0.4">
             <small>按住跳跃键时的重力（更低 = 跳更高）</small>
         </div>
         <div class="config-item">
@@ -727,9 +727,9 @@
         const PHYSICS = {
             moveSpeed: 5,
             maxFallSpeed: 10,
-            gravity: 0.5,
+            gravity: 1.0,
             jumpSpeed: -11,  // 降低跳跃高度
-            jumpHoldGravity: 0.25,
+            jumpHoldGravity: 0.4,
             jumpReleaseGravity: 0.7,
             coyoteTime: 6,
             jumpBufferTime: 6,
@@ -1048,9 +1048,9 @@
         function resetConfig() {
             PHYSICS.moveSpeed = 5;
             PHYSICS.jumpSpeed = -11;
-            PHYSICS.gravity = 0.5;
+            PHYSICS.gravity = 1.0;
             PHYSICS.maxFallSpeed = 10;
-            PHYSICS.jumpHoldGravity = 0.25;
+            PHYSICS.jumpHoldGravity = 0.4;
             PHYSICS.jumpReleaseGravity = 0.7;
             PHYSICS.coyoteTime = 6;
             PHYSICS.jumpBufferTime = 6;
