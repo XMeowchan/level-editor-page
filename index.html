@@ -164,6 +164,45 @@
             color: #333;
         }
         #helpPanel.show { display: block; }
+        #configPanel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            display: none;
+            z-index: 1000;
+            color: #333;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #configPanel.show { display: block; }
+        .config-item {
+            margin-bottom: 15px;
+        }
+        .config-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #558b2f;
+        }
+        .config-item input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #8bc34a;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .config-item small {
+            display: block;
+            margin-top: 3px;
+            color: #666;
+            font-size: 12px;
+        }
         .shortcut { 
             display: flex; 
             justify-content: space-between; 
@@ -190,7 +229,7 @@
                 <button class="tool" data-tool="bounce">🔵 弹跳板</button>
                 <button class="tool" data-tool="enemy">👾 敌人</button>
                 <button class="tool" data-tool="spike">🔺 尖刺</button>
-                <button class="tool" data-tool="coin">🪙 金币</button>
+                <button class="tool" data-tool="coin">💰 金币</button>
                 <button class="tool" data-tool="spawn">🟢 出生</button>
                 <button class="tool" data-tool="goal">⭐ 终点</button>
                 <button class="tool" data-tool="erase">🧹 擦除</button>
@@ -204,6 +243,7 @@
             <button class="action" id="clearBtn">🗑️ 清空</button>
             <button class="action" id="saveBtn">💾 保存</button>
             <button class="action" id="loadBtn">📂 加载</button>
+            <button class="action" id="configBtn">⚙️ 配置</button>
         </div>
         <div class="canvas-wrapper">
             <div class="props-panel">
@@ -241,6 +281,50 @@
         </div>
     </div>
 
+    <div id="configPanel">
+        <h3 style="margin-bottom: 15px; color: #558b2f;">⚙️ 物理参数配置</h3>
+        <div class="config-item">
+            <label>移动速度</label>
+            <input type="number" id="cfgMoveSpeed" step="0.5" value="5">
+            <small>玩家左右移动的最大速度</small>
+        </div>
+        <div class="config-item">
+            <label>跳跃力度</label>
+            <input type="number" id="cfgJumpSpeed" step="0.5" value="11">
+            <small>跳跃的初始向上速度（正数）</small>
+        </div>
+        <div class="config-item">
+            <label>重力</label>
+            <input type="number" id="cfgGravity" step="0.05" value="0.5">
+            <small>下落加速度</small>
+        </div>
+        <div class="config-item">
+            <label>最大下落速度</label>
+            <input type="number" id="cfgMaxFall" step="0.5" value="10">
+            <small>下落的最大速度</small>
+        </div>
+        <div class="config-item">
+            <label>按住跳跃重力</label>
+            <input type="number" id="cfgJumpHoldGravity" step="0.05" value="0.25">
+            <small>按住跳跃键时的重力（更低 = 跳更高）</small>
+        </div>
+        <div class="config-item">
+            <label>松开跳跃重力</label>
+            <input type="number" id="cfgJumpReleaseGravity" step="0.05" value="0.7">
+            <small>松开跳跃键时的重力（更高 = 快速下落）</small>
+        </div>
+        <div class="config-item">
+            <label>土狼时间（帧）</label>
+            <input type="number" id="cfgCoyoteTime" step="1" value="6">
+            <small>离开平台后仍可跳跃的帧数</small>
+        </div>
+        <div style="margin-top: 20px; text-align: center; display: flex; gap: 10px;">
+            <button class="action" onclick="applyConfig()">应用</button>
+            <button class="action" onclick="resetConfig()">重置默认</button>
+            <button class="action" onclick="document.getElementById('configPanel').classList.remove('show')">关闭</button>
+        </div>
+    </div>
+
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -257,15 +341,15 @@
             moveSpeed: 5,
             maxFallSpeed: 10,
             gravity: 0.5,
-            jumpSpeed: -13,
-            jumpHoldGravity: 0.25,  // 按住跳跃时的低重力
-            jumpReleaseGravity: 0.7, // 松开跳跃时的高重力
-            coyoteTime: 6,  // 土狼时间（离开平台后仍可跳跃的帧数）
-            jumpBufferTime: 6,  // 跳跃缓冲（提前按跳跃也能生效）
-            airAccel: 0.8,  // 空中加速度
-            groundAccel: 1.0,  // 地面加速度
-            friction: 0.7,  // 地面摩擦力
-            airFriction: 0.95  // 空中摩擦力
+            jumpSpeed: -11,  // 降低跳跃高度
+            jumpHoldGravity: 0.25,
+            jumpReleaseGravity: 0.7,
+            coyoteTime: 6,
+            jumpBufferTime: 6,
+            airAccel: 0.8,
+            groundAccel: 1.0,
+            friction: 0.7,
+            airFriction: 0.95
         };
         
         // ===== 撤销/重做系统 =====
@@ -437,6 +521,48 @@
         document.getElementById('helpBtn').onclick = () => {
             document.getElementById('helpPanel').classList.toggle('show');
         };
+        
+        // 配置面板
+        document.getElementById('configBtn').onclick = () => {
+            // 加载当前值
+            document.getElementById('cfgMoveSpeed').value = PHYSICS.moveSpeed;
+            document.getElementById('cfgJumpSpeed').value = Math.abs(PHYSICS.jumpSpeed);
+            document.getElementById('cfgGravity').value = PHYSICS.gravity;
+            document.getElementById('cfgMaxFall').value = PHYSICS.maxFallSpeed;
+            document.getElementById('cfgJumpHoldGravity').value = PHYSICS.jumpHoldGravity;
+            document.getElementById('cfgJumpReleaseGravity').value = PHYSICS.jumpReleaseGravity;
+            document.getElementById('cfgCoyoteTime').value = PHYSICS.coyoteTime;
+            document.getElementById('configPanel').classList.toggle('show');
+        };
+        
+        function applyConfig() {
+            PHYSICS.moveSpeed = parseFloat(document.getElementById('cfgMoveSpeed').value);
+            PHYSICS.jumpSpeed = -Math.abs(parseFloat(document.getElementById('cfgJumpSpeed').value));
+            PHYSICS.gravity = parseFloat(document.getElementById('cfgGravity').value);
+            PHYSICS.maxFallSpeed = parseFloat(document.getElementById('cfgMaxFall').value);
+            PHYSICS.jumpHoldGravity = parseFloat(document.getElementById('cfgJumpHoldGravity').value);
+            PHYSICS.jumpReleaseGravity = parseFloat(document.getElementById('cfgJumpReleaseGravity').value);
+            PHYSICS.coyoteTime = parseInt(document.getElementById('cfgCoyoteTime').value);
+            document.getElementById('configPanel').classList.remove('show');
+            alert('配置已应用！');
+        }
+        
+        function resetConfig() {
+            PHYSICS.moveSpeed = 5;
+            PHYSICS.jumpSpeed = -11;
+            PHYSICS.gravity = 0.5;
+            PHYSICS.maxFallSpeed = 10;
+            PHYSICS.jumpHoldGravity = 0.25;
+            PHYSICS.jumpReleaseGravity = 0.7;
+            PHYSICS.coyoteTime = 6;
+            PHYSICS.jumpBufferTime = 6;
+            PHYSICS.airAccel = 0.8;
+            PHYSICS.groundAccel = 1.0;
+            PHYSICS.friction = 0.7;
+            PHYSICS.airFriction = 0.95;
+            document.getElementById('configPanel').classList.remove('show');
+            alert('已重置为默认值！');
+        }
         
         // 画布交互
         canvas.onmousedown = e => { 
@@ -789,7 +915,7 @@
                     t.life--;
                     const alpha = t.life / 15;
                     ctx.globalAlpha = alpha * 0.3;
-                    ctx.fillStyle = player.ground ? '#0066ff' : '#00aaff';
+                    ctx.fillStyle = '#66bb6a';
                     ctx.fillRect(t.x - 10, t.y - 14, 20, 28);
                     ctx.globalAlpha = 1;
                 });
@@ -806,12 +932,50 @@
                 ctx.translate(player.x + 12, player.y + 16);
                 ctx.scale(squash, stretch);
                 ctx.translate(-12, -16);
-                ctx.fillStyle = player.ground ? '#0066ff' : '#00aaff';
+                
+                // 身体（绿色小人）
+                ctx.fillStyle = '#66bb6a';
                 ctx.fillRect(0, offsetY, 24, 32);
+                
+                // 头部高光
+                ctx.fillStyle = '#81c784';
+                ctx.fillRect(2, offsetY + 2, 20, 10);
+                
+                // 眼睛
                 ctx.fillStyle = '#fff';
                 const eyeY = player.vy < 0 ? 6 : 8;
-                ctx.fillRect(6, offsetY + eyeY, 4, 4);
-                ctx.fillRect(14, offsetY + eyeY, 4, 4);
+                ctx.fillRect(6, offsetY + eyeY, 5, 5);
+                ctx.fillRect(13, offsetY + eyeY, 5, 5);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(7, offsetY + eyeY + 1, 3, 3);
+                ctx.fillRect(14, offsetY + eyeY + 1, 3, 3);
+                
+                // 嘴巴
+                if (player.vy < -5) {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(8, offsetY + 18, 8, 2);
+                }
+                
+                // 手臂（跑步时摆动）
+                if (player.ground && player.vx !== 0) {
+                    const armSwing = Math.sin(time * 0.4) * 3;
+                    ctx.fillStyle = '#558b2f';
+                    ctx.fillRect(-2, offsetY + 12 + armSwing, 3, 8);
+                    ctx.fillRect(23, offsetY + 12 - armSwing, 3, 8);
+                }
+                
+                // 腿部（跑步时摆动）
+                if (player.ground && player.vx !== 0) {
+                    const legSwing = Math.sin(time * 0.4) * 2;
+                    ctx.fillStyle = '#558b2f';
+                    ctx.fillRect(6, offsetY + 26 + legSwing, 5, 6);
+                    ctx.fillRect(13, offsetY + 26 - legSwing, 5, 6);
+                } else {
+                    ctx.fillStyle = '#558b2f';
+                    ctx.fillRect(6, offsetY + 26, 5, 6);
+                    ctx.fillRect(13, offsetY + 26, 5, 6);
+                }
+                
                 ctx.restore();
             }
         }
