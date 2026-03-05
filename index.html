@@ -521,14 +521,71 @@
                 }
             }
             
+            // 辅助函数：检查某位置是否有平台
+            function hasPlatform(x, y) {
+                return objects.some(obj => 
+                    (obj.type === 'platform' || obj.type === 'moving') && 
+                    obj.x === x && obj.y === y
+                );
+            }
+            
             objects.forEach(o => {
                 switch(o.type) {
                     case 'platform':
-                        ctx.fillStyle = '#8b4513';
+                        // TileMap 自动识别
+                        const hasTop = hasPlatform(o.x, o.y - GRID);
+                        const hasBottom = hasPlatform(o.x, o.y + GRID);
+                        const hasLeft = hasPlatform(o.x - GRID, o.y);
+                        const hasRight = hasPlatform(o.x + GRID, o.y);
+                        
+                        // 土壤层（棕色）
+                        ctx.fillStyle = '#8b6f47';
                         ctx.fillRect(o.x, o.y, GRID, GRID);
+                        
+                        // 草地顶部（只在没有上方平台时显示）
+                        if (!hasTop) {
+                            // 草地
+                            ctx.fillStyle = '#7cb342';
+                            ctx.fillRect(o.x, o.y, GRID, 8);
+                            
+                            // 草叶装饰
+                            ctx.fillStyle = '#558b2f';
+                            for (let i = 0; i < 3; i++) {
+                                const gx = o.x + 8 + i * 8;
+                                ctx.fillRect(gx, o.y + 2, 2, 4);
+                                ctx.fillRect(gx + 1, o.y, 2, 2);
+                            }
+                        }
+                        
+                        // 土壤纹理
+                        ctx.fillStyle = 'rgba(101, 67, 33, 0.3)';
+                        for (let i = 0; i < 4; i++) {
+                            const px = o.x + Math.random() * GRID;
+                            const py = o.y + 8 + Math.random() * (GRID - 8);
+                            ctx.fillRect(px, py, 2, 2);
+                        }
+                        
+                        // 边框（根据相邻平台决定）
                         ctx.strokeStyle = '#654321';
                         ctx.lineWidth = 2;
-                        ctx.strokeRect(o.x, o.y, GRID, GRID);
+                        ctx.beginPath();
+                        if (!hasLeft) {
+                            ctx.moveTo(o.x, o.y);
+                            ctx.lineTo(o.x, o.y + GRID);
+                        }
+                        if (!hasRight) {
+                            ctx.moveTo(o.x + GRID, o.y);
+                            ctx.lineTo(o.x + GRID, o.y + GRID);
+                        }
+                        if (!hasTop) {
+                            ctx.moveTo(o.x, o.y);
+                            ctx.lineTo(o.x + GRID, o.y);
+                        }
+                        if (!hasBottom) {
+                            ctx.moveTo(o.x, o.y + GRID);
+                            ctx.lineTo(o.x + GRID, o.y + GRID);
+                        }
+                        ctx.stroke();
                         break;
                     
                     case 'moving':
@@ -880,14 +937,26 @@
                 // 平台和移动平台
                 if (o.type === 'platform' || o.type === 'moving') {
                     if (hit(pl, p)) {
-                        if (player.vy > 0 && player.y + 32 - player.vy <= p.y) {
+                        // 从上方落下
+                        if (player.vy > 0 && player.y + 32 - player.vy <= p.y + 4) {
                             player.y = p.y - 32;
                             player.vy = 0;
                             player.ground = true;
                             if (o.type === 'moving') player.x += o.speed;
-                        } else if (player.vy < 0 && player.y - player.vy >= p.y + p.h) {
+                        } 
+                        // 从下方撞击
+                        else if (player.vy < 0 && player.y - player.vy >= p.y + p.h - 4) {
                             player.y = p.y + p.h;
                             player.vy = 0;
+                        }
+                        // 左右碰撞
+                        else {
+                            if (player.vx > 0) {
+                                player.x = p.x - 24;
+                            } else if (player.vx < 0) {
+                                player.x = p.x + p.w;
+                            }
+                            player.vx = 0;
                         }
                     }
                 }
