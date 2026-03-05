@@ -760,6 +760,7 @@
                 savedAt: new Date().toISOString()
             };
             localStorage.setItem('level-draft', JSON.stringify(draftData));
+            console.log('✓ 草稿已保存:', objects.length, '个物体');
             
             // 显示保存指示器
             showSaveIndicator();
@@ -782,10 +783,13 @@
         }
         
         function loadDraft() {
+            console.log('尝试加载草稿...');
             const draft = localStorage.getItem('level-draft');
             if (draft) {
+                console.log('找到草稿数据');
                 try {
                     const draftData = JSON.parse(draft);
+                    console.log('草稿包含', draftData.objects?.length || 0, '个物体');
                     objects = draftData.objects || [];
                     document.getElementById('levelName').value = draftData.name || '我的关卡';
                     document.getElementById('levelAuthor').value = draftData.author || 'XMeow';
@@ -799,7 +803,7 @@
                     
                     const indicator = document.createElement('div');
                     indicator.style.cssText = 'position:fixed;top:80px;right:20px;background:rgba(33,150,243,0.9);color:white;padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
-                    indicator.innerHTML = `<strong>✓ 已恢复草稿</strong><br><small>${diffMinutes < 1 ? '刚刚' : diffMinutes + '分钟前'}保存</small>`;
+                    indicator.innerHTML = `<strong>✓ 已恢复草稿</strong><br><small>${diffMinutes < 1 ? '刚刚' : diffMinutes + '分钟前'}保存 (${objects.length}个物体)</small>`;
                     document.body.appendChild(indicator);
                     
                     setTimeout(() => {
@@ -808,10 +812,13 @@
                         setTimeout(() => indicator.remove(), 300);
                     }, 3000);
                     
+                    console.log('✓ 草稿恢复成功');
                     return true;
                 } catch (e) {
                     console.error('恢复草稿失败:', e);
                 }
+            } else {
+                console.log('没有找到草稿');
             }
             return false;
         }
