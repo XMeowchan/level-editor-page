@@ -1151,6 +1151,7 @@
         };
         
         canvas.onmouseup = canvas.onmouseleave = () => { 
+            console.log('鼠标松开, tool:', tool, 'drawing:', drawing);
             if (tool === 'select') {
                 if (selectionBox) {
                     // 完成框选
@@ -1171,11 +1172,15 @@
                         delete o._dragStartX;
                         delete o._dragStartY;
                     });
+                    console.log('拖动结束，调用 saveHistory');
                     saveHistory();
                     isDragging = false;
                 }
             } else {
-                if (drawing) saveHistory();
+                if (drawing) {
+                    console.log('绘制结束，调用 saveHistory，物体数:', objects.length);
+                    saveHistory();
+                }
                 drawing = false;
             }
             lastX = lastY = -1;
