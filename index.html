@@ -256,6 +256,22 @@
         let startTime = 0, elapsedTime = 0, time = 0;
         const keys = {};
         
+        // ===== Celeste 风格物理参数 =====
+        const PHYSICS = {
+            moveSpeed: 5,
+            maxFallSpeed: 10,
+            gravity: 0.5,
+            jumpSpeed: -13,
+            jumpHoldGravity: 0.25,  // 按住跳跃时的低重力
+            jumpReleaseGravity: 0.7, // 松开跳跃时的高重力
+            coyoteTime: 6,  // 土狼时间（离开平台后仍可跳跃的帧数）
+            jumpBufferTime: 6,  // 跳跃缓冲（提前按跳跃也能生效）
+            airAccel: 0.8,  // 空中加速度
+            groundAccel: 1.0,  // 地面加速度
+            friction: 0.7,  // 地面摩擦力
+            airFriction: 0.95  // 空中摩擦力
+        };
+        
         // ===== 撤销/重做系统 =====
         let history = [], historyIndex = -1, clipboard = null;
         
@@ -642,7 +658,16 @@
             const spawn = objects.find(o => o.type === 'spawn');
             if (!spawn) return alert('请先放置出生点');
             mode = 'test';
-            player = { x: spawn.x + 4, y: spawn.y, vx: 0, vy: 0, ground: false };
+            player = { 
+                x: spawn.x + 4, 
+                y: spawn.y, 
+                vx: 0, 
+                vy: 0, 
+                ground: false,
+                coyoteTimer: 0,
+                jumpBufferTimer: 0,
+                jumpHeld: false
+            };
             startTime = Date.now();
             elapsedTime = 0;
             
@@ -721,16 +746,22 @@
                 document.getElementById('helpBtn').click();
             }
             
+            // 跳跃输入（跳跃缓冲）
             if (mode === 'test' && [' ', 'ArrowUp', 'w', 'W'].includes(e.key)) {
                 e.preventDefault();
-                if (player.ground) {
-                    player.vy = -12;
-                    playSound('jump');
-                    createParticles(player.x, player.y, 8, 'jump');
+                if (!player.jumpHeld) {
+                    player.jumpBufferTimer = PHYSICS.jumpBufferTime;
+                    player.jumpHeld = true;
                 }
             }
         };
-        window.onkeyup = e => keys[e.key] = false;
+        window.onkeyup = e => {
+            keys[e.key] = false;
+            // 松开跳跃键
+            if (mode === 'test' && [' ', 'ArrowUp', 'w', 'W'].includes(e.key)) {
+                player.jumpHeld = false;
+            }
+        };
         
         // 碰撞检测
         function hit(a, b) {
@@ -759,10 +790,52 @@
             const ms = Math.floor((elapsedTime % 1000) / 10);
             document.getElementById('timer').textContent = `⏱️ ${sec}.${ms.toString().padStart(2, '0')}s`;
             
-            // 玩家移动
-            player.vx = (keys.ArrowLeft || keys.a || keys.A) ? -5 : (keys.ArrowRight || keys.d || keys.D) ? 5 : 0;
-            player.vy = Math.min(player.vy + 0.6, 15);
+            // ===== Celeste 风格移动 =====
+            const inputX = (keys.ArrowLeft || keys.a || keys.A) ? -1 : (keys.ArrowRight || keys.d || keys.D) ? 1 : 0;
             
+            // 加速度系统
+            const accel = player.ground ? PHYSICS.groundAccel : PHYSICS.airAccel;
+            const targetVx = inputX * PHYSICS.moveSpeed;
+            
+            if (inputX !== 0) {
+                player.vx += (targetVx - player.vx) * accel;
+            } else {
+                // 摩擦力
+                const friction = player.ground ? PHYSICS.friction : PHYSICS.airFriction;
+                player.vx *= friction;
+                if (Math.abs(player.vx) < 0.1) player.vx = 0;
+            }
+            
+            // 土狼时间和跳跃缓冲
+            if (player.ground) {
+                player.coyoteTimer = PHYSICS.coyoteTime;
+            } else {
+                player.coyoteTimer--;
+            }
+            
+            if (player.jumpBufferTimer > 0) player.jumpBufferTimer--;
+            
+            // 跳跃逻辑
+            if (player.jumpBufferTimer > 0 && player.coyoteTimer > 0) {
+                player.vy = PHYSICS.jumpSpeed;
+                player.jumpBufferTimer = 0;
+                player.coyoteTimer = 0;
+                playSound('jump');
+                createParticles(player.x, player.y, 8, 'jump');
+            }
+            
+            // 可变跳跃高度（按住跳跃 = 低重力，松开 = 高重力）
+            let currentGravity = PHYSICS.gravity;
+            if (player.vy < 0 && player.jumpHeld) {
+                currentGravity = PHYSICS.jumpHoldGravity;
+            } else if (player.vy < 0 && !player.jumpHeld) {
+                currentGravity = PHYSICS.jumpReleaseGravity;
+            }
+            
+            player.vy += currentGravity;
+            player.vy = Math.min(player.vy, PHYSICS.maxFallSpeed);
+            
+            // 应用速度
             player.x += player.vx;
             if (player.x < 0) player.x = 0;
             if (player.x > W - 24) player.x = W - 24;
